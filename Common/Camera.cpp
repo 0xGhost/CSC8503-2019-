@@ -25,28 +25,38 @@ void Camera::UpdateCamera(float dt) {
 		yaw -= 360.0f;
 	}
 
-	float frameSpeed = 200 * dt;
+	//float frameSpeed = 200 * dt;
+	float frameSpeed = cameraSpeed * dt;
+	bool isMove = false;
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
+		isMove = true;
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
+		isMove = true;
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(0, 0, -1) * frameSpeed;
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
+		isMove = true;
 		position += Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::D)) {
+		isMove = true;
 		position -= Matrix4::Rotation(yaw, Vector3(0, 1, 0)) * Vector3(-1, 0, 0) * frameSpeed;
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE)) {
+		isMove = true;
 		position.y += frameSpeed;
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)) {
+		isMove = true;
 		position.y -= frameSpeed;
 	}
+	cameraSpeed = isMove ? (cameraSpeed + 10 * dt) : cameraMinSpeed;
+
 }
 
 /*

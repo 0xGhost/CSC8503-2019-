@@ -16,7 +16,8 @@ namespace NCL {
 			right	= 0;
 			top		= 0;
 			bottom	= 0;
-
+			cameraSpeed = 10.0f;
+			cameraMinSpeed = 10.0f;
 			pitch		= 0.0f;
 			yaw			= 0.0f;
 
@@ -31,7 +32,8 @@ namespace NCL {
 			this->pitch		= pitch;
 			this->yaw		= yaw;
 			this->position	= position;
-
+			this->cameraSpeed = 10.0f;
+			this->cameraMinSpeed = 10.0f;
 			this->fov		= 45.0f;
 			this->nearPlane = 1.0f;
 			this->farPlane	= 100.0f;
@@ -100,5 +102,8 @@ namespace NCL {
 		float	yaw;
 		float	pitch;
 		Vector3 position;
+
+		float cameraSpeed;
+		float cameraMinSpeed;
 	};
 }

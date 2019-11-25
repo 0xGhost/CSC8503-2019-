@@ -119,6 +119,11 @@ bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObje
 	return false;
 }
 
+bool NCL::CSC8503::GameWorld::Raycast(Ray& r, RayCollision& closestCollision, unsigned int layerMask, bool closestObject) const
+{
+	return false;
+}
+
 
 /*
 Constraint Tutorial Stuff
