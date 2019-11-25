@@ -15,28 +15,114 @@
 
 using namespace NCL;
 
-bool CollisionDetection::RayPlaneIntersection(const Ray&r, const Plane&p, RayCollision& collisions) {
+bool CollisionDetection::RayPlaneIntersection(const Ray& r, const Plane& p, RayCollision& collisions) {
 	return false;
 }
 
-bool CollisionDetection::RayIntersection(const Ray& r,GameObject& object, RayCollision& collision) {
+bool CollisionDetection::RayIntersection(const Ray& r, GameObject& object, RayCollision& collision) {
+	const Transform& transform = object.GetConstTransform();
+	const CollisionVolume* volume = object.GetBoundingVolume();
+	if (!volume) {
+		return false;
+	}
+	switch (volume->type) {
+	case VolumeType::AABB: return RayAABBIntersection(r,
+		transform, (const AABBVolume&)* volume, collision);
+	case VolumeType::OBB: return RayOBBIntersection(r,
+		transform, (const OBBVolume&)* volume, collision);
+	case VolumeType::Sphere: return RaySphereIntersection(r,
+		transform, (const SphereVolume&)* volume, collision);
+	}
 	return false;
 }
 
-bool CollisionDetection::RayBoxIntersection(const Ray&r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision) {
-	return false;
+bool CollisionDetection::RayBoxIntersection(const Ray& r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision) {
+	Vector3 boxMin = boxPos - boxSize;
+	Vector3 boxMax = boxPos + boxSize;
+
+
+	Vector3 rayPos = r.GetPosition();
+	Vector3 rayDir = r.GetDirection();
+
+	Vector3 tVals(-1, -1, -1);
+
+	for (int i = 0; i < 3; ++i) { // get best 3 intersections
+		if (rayDir[i] > 0) {
+			tVals[i] = (boxMin[i] - rayPos[i]) / rayDir[i];
+		}
+		else if (rayDir[i] < 0) {
+			tVals[i] = (boxMax[i] - rayPos[i]) / rayDir[i];
+		}
+	}
+	float bestT = tVals.GetMaxElement();
+	if (bestT < 0.0f) {
+		return false; // no backwards rays
+	}
+
+	Vector3 intersection = rayPos + (rayDir * bestT);
+
+	const float epsilon = 0.0001f; // an amount of leeway in our calcs
+
+	for (int i = 0; i < 3; ++i) {
+		if (intersection[i] + epsilon < boxMin[i] ||
+			intersection[i] - epsilon > boxMax[i]) {
+			return false; // best intersection doesn ’t touch the box !
+		}
+	}
+	collision.collidedAt = intersection;
+	collision.rayDistance = bestT;
+	return true;
 }
 
-bool CollisionDetection::RayAABBIntersection(const Ray&r, const Transform& worldTransform, const AABBVolume& volume, RayCollision& collision) {
-	return false;
+bool CollisionDetection::RayAABBIntersection(const Ray& r, const Transform& worldTransform, const AABBVolume& volume, RayCollision& collision) {
+		Vector3 boxPos = worldTransform.GetWorldPosition();
+		Vector3 boxSize = volume.GetHalfDimensions();
+		return RayBoxIntersection(r, boxPos, boxSize, collision);
 }
 
-bool CollisionDetection::RayOBBIntersection(const Ray&r, const Transform& worldTransform, const OBBVolume& volume, RayCollision& collision) {
-	return false;
+bool CollisionDetection::RayOBBIntersection(const Ray& r, const Transform& worldTransform, const OBBVolume& volume, RayCollision& collision) {
+	Quaternion orientation = worldTransform.GetWorldOrientation();
+	Vector3 position = worldTransform.GetWorldPosition();
+
+	Matrix3 transform = orientation.ToMatrix3();
+	Matrix3 invTransform = orientation.Conjugate().ToMatrix3();
+
+	Vector3 localRayPos = r.GetPosition() - position;
+
+	Ray tempRay(invTransform * localRayPos, invTransform * r.GetDirection());
+
+	bool collided = RayBoxIntersection(tempRay, Vector3(),
+		volume.GetHalfDimensions(), collision);
+
+	if (collided) {
+		collision.collidedAt = transform * collision.collidedAt + position;
+	}
+	return collided;
 }
 
-bool CollisionDetection::RaySphereIntersection(const Ray&r, const Transform& worldTransform, const SphereVolume& volume, RayCollision& collision) {
-	return false;
+bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& worldTransform, const SphereVolume& volume, RayCollision& collision) {
+	Vector3 spherePos = worldTransform.GetWorldPosition();
+	float sphereRadius = volume.GetRadius();
+
+	// Get the direction between the ray origin and the sphere origin
+	Vector3 dir = (spherePos - r.GetPosition());
+	// Then project the sphere ’s origin onto our ray direction vector
+	float sphereProj = Vector3::Dot(dir, r.GetDirection());
+	// Get closest point on ray line to sphere
+	Vector3 point = r.GetPosition() + (r.GetDirection() * sphereProj);
+
+	float sphereDist = (point - spherePos).Length();
+
+	if (sphereDist > sphereRadius) {
+		return false;
+	}
+	float sNorm = sphereDist / sphereRadius;
+	sNorm = cos(DegreesToRadians(sNorm * 90.0f));
+
+	collision.rayDistance = sphereProj - (sphereRadius * sNorm);
+	collision.collidedAt = r.GetPosition() +
+		(r.GetDirection() * collision.rayDistance);
+	return true;
 }
 
 bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, CollisionInfo& collisionInfo) {
@@ -73,9 +159,9 @@ bool CollisionDetection::OBBIntersection(
 
 //It's helper functions for generating rays from here on out:
 
-Matrix4 GenerateInverseView(const Camera &c) {
+Matrix4 GenerateInverseView(const Camera& c) {
 	float pitch = c.GetPitch();
-	float yaw	= c.GetYaw();
+	float yaw = c.GetYaw();
 	Vector3 position = c.GetPosition();
 
 	Matrix4 iview =
@@ -93,10 +179,10 @@ Matrix4 GenerateInverseProjection(float aspect, float nearPlane, float farPlane,
 
 	Matrix4 m;
 
-	float h = 1.0f / tan(fov*PI_OVER_360);
+	float h = 1.0f / tan(fov * PI_OVER_360);
 
 	m.array[0] = aspect / h;
-	m.array[5] = tan(fov*PI_OVER_360);
+	m.array[5] = tan(fov * PI_OVER_360);
 	m.array[10] = 0.0f;
 
 	m.array[11] = invNegDepth;//// +PI_OVER_360;
@@ -111,10 +197,10 @@ Matrix4 GenerateInverseProjection(float aspect, float nearPlane, float farPlane,
 Vector3 CollisionDetection::Unproject(const Vector3& screenPos, const Camera& cam) {
 	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
 
-	float aspect	= screenSize.x / screenSize.y;
-	float fov		= cam.GetFieldOfVision();
+	float aspect = screenSize.x / screenSize.y;
+	float fov = cam.GetFieldOfVision();
 	float nearPlane = cam.GetNearPlane();
-	float farPlane  = cam.GetFarPlane();
+	float farPlane = cam.GetFarPlane();
 
 	//Create our inverted matrix! Note how that to get a correct inverse matrix,
 	//the order of matrices used to form it are inverted, too.
@@ -123,7 +209,7 @@ Vector3 CollisionDetection::Unproject(const Vector3& screenPos, const Camera& ca
 	Matrix4 test1 = GenerateInverseView(cam);
 	Matrix4 test2 = cam.BuildViewMatrix().Inverse();
 
-	Matrix4 proj  = cam.BuildProjectionMatrix(aspect);
+	Matrix4 proj = cam.BuildProjectionMatrix(aspect);
 	Matrix4 test4 = cam.BuildProjectionMatrix(aspect).Inverse();
 	Matrix4 test3 = GenerateInverseProjection(aspect, fov, nearPlane, farPlane);
 
@@ -149,7 +235,7 @@ Vector3 CollisionDetection::Unproject(const Vector3& screenPos, const Camera& ca
 
 Ray CollisionDetection::BuildRayFromMouse(const Camera& cam) {
 	Vector2 screenMouse = Window::GetMouse()->GetAbsolutePosition();
-	Vector2 screenSize	= Window::GetWindow()->GetScreenSize();
+	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
 
 	//We remove the y axis mouse position from height as OpenGL is 'upside down',
 	//and thinks the bottom left is the origin, instead of the top left!
@@ -180,7 +266,7 @@ Ray CollisionDetection::BuildRayFromMouse(const Camera& cam) {
 Matrix4 CollisionDetection::GenerateInverseProjection(float aspect, float fov, float nearPlane, float farPlane) {
 	Matrix4 m;
 
-	float t = tan(fov*PI_OVER_360);
+	float t = tan(fov * PI_OVER_360);
 
 	float neg_depth = nearPlane - farPlane;
 
@@ -188,17 +274,17 @@ Matrix4 CollisionDetection::GenerateInverseProjection(float aspect, float fov, f
 
 	float c = (farPlane + nearPlane) / neg_depth;
 	float e = -1.0f;
-	float d = 2.0f*(nearPlane*farPlane) / neg_depth;
+	float d = 2.0f * (nearPlane * farPlane) / neg_depth;
 
-	m.array[0]  = aspect / h;
-	m.array[5]  = tan(fov*PI_OVER_360);
+	m.array[0] = aspect / h;
+	m.array[5] = tan(fov * PI_OVER_360);
 
 	m.array[10] = 0.0f;
 	m.array[11] = 1.0f / d;
 
 	m.array[14] = 1.0f / e;
 
-	m.array[15] = -c / (d*e);
+	m.array[15] = -c / (d * e);
 
 	return m;
 }
@@ -207,17 +293,17 @@ Matrix4 CollisionDetection::GenerateInverseProjection(float aspect, float fov, f
 And here's how we generate an inverse view matrix. It's pretty much
 an exact inversion of the BuildViewMatrix function of the Camera class!
 */
-Matrix4 CollisionDetection::GenerateInverseView(const Camera &c) {
+Matrix4 CollisionDetection::GenerateInverseView(const Camera& c) {
 	float pitch = c.GetPitch();
-	float yaw	= c.GetYaw();
+	float yaw = c.GetYaw();
 	Vector3 position = c.GetPosition();
 
 	Matrix4 iview =
-Matrix4::Translation(position) *
-Matrix4::Rotation(yaw, Vector3(0, 1, 0)) *
-Matrix4::Rotation(pitch, Vector3(1, 0, 0));
+		Matrix4::Translation(position) *
+		Matrix4::Rotation(yaw, Vector3(0, 1, 0)) *
+		Matrix4::Rotation(pitch, Vector3(1, 0, 0));
 
-return iview;
+	return iview;
 }
 
 
@@ -239,7 +325,7 @@ So, to form the inverted matrix, we need the aspect and fov used to create the
 projection matrix of our scene, and the camera used to form the view matrix.
 
 */
-Vector3	CollisionDetection::UnprojectScreenPosition(Vector3 position, float aspect, float fov, const Camera &c) {
+Vector3	CollisionDetection::UnprojectScreenPosition(Vector3 position, float aspect, float fov, const Camera& c) {
 	//Create our inverted matrix! Note how that to get a correct inverse matrix,
 	//the order of matrices used to form it are inverted, too.
 	Matrix4 invVP = GenerateInverseView(c) * GenerateInverseProjection(aspect, fov, c.GetNearPlane(), c.GetFarPlane());

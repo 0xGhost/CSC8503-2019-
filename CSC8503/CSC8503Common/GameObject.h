@@ -71,6 +71,9 @@ namespace NCL {
 				//std::cout << "OnCollisionEnd event occured!\n";
 			}
 
+			unsigned int GetLayer() { return layer; }
+			void SetLayer(unsigned int l) { layer = l; } // layer range: 0 ~ 31
+
 			bool GetBroadphaseAABB(Vector3&outsize) const;
 
 			void UpdateBroadphaseAABB();
@@ -85,6 +88,7 @@ namespace NCL {
 
 			bool	isActive;
 			string	name;
+			unsigned int layer;
 
 			Vector3 broadphaseAABB;
 		};

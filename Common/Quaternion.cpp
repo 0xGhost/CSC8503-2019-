@@ -92,6 +92,16 @@ void Quaternion::Normalise(){
 	}
 }
 
+Matrix4 Quaternion::ToMatrix4() const
+{
+	return Matrix4(*this);
+}
+
+Matrix3 Quaternion::ToMatrix3() const
+{
+	return Matrix3(*this);
+}
+
 void Quaternion::CalculateW()	{
 	w = 1.0f - (x*x)-(y*y)-(z*z);
 	if(w < 0.0f) {

@@ -53,6 +53,11 @@ namespace NCL {
 				std::vector<Constraint*>::const_iterator& first,
 				std::vector<Constraint*>::const_iterator& last) const;
 
+			void InitLayerCollisionMatrix(bool b) { memset(LayerCollisionMatrix, b, sizeof(bool) * 32 * 32); }
+			// layer range: 0 ~ 31
+			bool CheckLayerCollision(unsigned int a, unsigned int b) const { return LayerCollisionMatrix[a][b]; }
+			void SetLayerCollision(unsigned int a, unsigned int b, bool c) { LayerCollisionMatrix[a][b] = c; LayerCollisionMatrix[b][a] = c; }
+
 		protected:
 			void UpdateTransforms();
 			void UpdateQuadTree();
@@ -67,6 +72,8 @@ namespace NCL {
 
 			bool shuffleConstraints;
 			bool shuffleObjects;
+			bool LayerCollisionMatrix[32][32];
+
 		};
 	}
 }

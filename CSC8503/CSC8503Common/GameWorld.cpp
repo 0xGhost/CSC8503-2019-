@@ -10,11 +10,13 @@ using namespace NCL::CSC8503;
 
 GameWorld::GameWorld()	{
 	mainCamera = new Camera();
-
+	
 	quadTree = nullptr;
 
 	shuffleConstraints	= false;
 	shuffleObjects		= false;
+
+	InitLayerCollisionMatrix(true);
 }
 
 GameWorld::~GameWorld()	{
