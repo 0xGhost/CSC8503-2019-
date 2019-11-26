@@ -108,6 +108,12 @@ bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& wo
 	Vector3 dir = (spherePos - r.GetPosition());
 	// Then project the sphere ’s origin onto our ray direction vector
 	float sphereProj = Vector3::Dot(dir, r.GetDirection());
+
+	if (sphereProj < 0.0f)
+	{
+		return false;
+	}
+
 	// Get closest point on ray line to sphere
 	Vector3 point = r.GetPosition() + (r.GetDirection() * sphereProj);
 
@@ -117,7 +123,8 @@ bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& wo
 		return false;
 	}
 	float sNorm = sphereDist / sphereRadius;
-	sNorm = cos(DegreesToRadians(sNorm * 90.0f));
+	sNorm = cos(asin(sNorm));
+	//sNorm = cos(DegreesToRadians(sNorm * 90.0f));
 
 	collision.rayDistance = sphereProj - (sphereRadius * sNorm);
 	collision.collidedAt = r.GetPosition() +

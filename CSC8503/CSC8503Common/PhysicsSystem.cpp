@@ -12,15 +12,15 @@
 using namespace NCL;
 using namespace CSC8503;
 
-PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g)	{
-	applyGravity	= false;
-	useBroadPhase	= false;	
-	dTOffset		= 0.0f;
-	globalDamping	= 0.95f;
+PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g) {
+	applyGravity = false;
+	useBroadPhase = false;
+	dTOffset = 0.0f;
+	globalDamping = 0.95f;
 	SetGravity(Vector3(0.0f, -9.8f, 0.0f));
 }
 
-PhysicsSystem::~PhysicsSystem()	{
+PhysicsSystem::~PhysicsSystem() {
 }
 
 void PhysicsSystem::SetGravity(const Vector3& g) {
@@ -60,11 +60,11 @@ void PhysicsSystem::Update(float dt) {
 		iterationDt = 1.0f / 15.0f; //it'll just have to run bigger timesteps...
 		//std::cout << "Setting physics iterations to 15" << iterationDt << std::endl;
 	}
-	else if (dTOffset > 4  * iterationDt) { //the physics engine cant catch up!
+	else if (dTOffset > 4 * iterationDt) { //the physics engine cant catch up!
 		iterationDt = 1.0f / 30.0f; //it'll just have to run bigger timesteps...
 		//std::cout << "Setting iteration dt to 4 case " << iterationDt << std::endl;
 	}
-	else if (dTOffset > 2* iterationDt) { //the physics engine cant catch up!
+	else if (dTOffset > 2 * iterationDt) { //the physics engine cant catch up!
 		iterationDt = 1.0f / 60.0f; //it'll just have to run bigger timesteps...
 		//std::cout << "Setting iteration dt to 2 case " << iterationDt << std::endl;
 	}
@@ -79,7 +79,7 @@ void PhysicsSystem::Update(float dt) {
 		UpdateObjectAABBs();
 	}
 
-	while(dTOffset > iterationDt *0.5) {
+	while (dTOffset > iterationDt * 0.5) {
 		IntegrateAccel(iterationDt); //Update accelerations from external forces
 		if (useBroadPhase) {
 			BroadPhase();
@@ -92,15 +92,15 @@ void PhysicsSystem::Update(float dt) {
 		//This is our simple iterative solver - 
 		//we just run things multiple times, slowly moving things forward
 		//and then rechecking that the constraints have been met		
-		float constraintDt = iterationDt /  (float)constraintIterationCount;
+		float constraintDt = iterationDt / (float)constraintIterationCount;
 
 		for (int i = 0; i < constraintIterationCount; ++i) {
-			UpdateConstraints(constraintDt);	
+			UpdateConstraints(constraintDt);
 		}
-		
+
 		IntegrateVelocity(iterationDt); //update positions from new velocity changes
 
-		dTOffset -= iterationDt; 
+		dTOffset -= iterationDt;
 	}
 	ClearForces();	//Once we've finished with the forces, reset them to zero
 
@@ -118,7 +118,7 @@ The first time they are added, we tell the objects they are colliding.
 The frame they are to be removed, we tell them they're no longer colliding.
 
 From this simple mechanism, we we build up gameplay interactions inside the
-OnCollisionBegin / OnCollisionEnd functions (removing health when hit by a 
+OnCollisionBegin / OnCollisionEnd functions (removing health when hit by a
 rocket launcher, gaining a point when the player hits the gold coin, and so on).
 */
 void PhysicsSystem::UpdateCollisionList() {
@@ -152,7 +152,7 @@ void PhysicsSystem::UpdateObjectAABBs() {
 /*
 
 This is how we'll be doing collision detection in tutorial 4.
-We step thorugh every pair of objects once (the inner for loop offset 
+We step thorugh every pair of objects once (the inner for loop offset
 ensures this), and determine whether they collide, and if so, add them
 to the collision set for later processing. The set will guarantee that
 a particular pair will only be added once, so objects colliding for
@@ -165,7 +165,7 @@ void PhysicsSystem::BasicCollisionDetection() {
 /*
 
 In tutorial 5, we start determining the correct response to a collision,
-so that objects separate back out. 
+so that objects separate back out.
 
 */
 void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, CollisionDetection::ContactPoint& p) const {
@@ -177,7 +177,7 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 Later, we replace the BasicCollisionDetection method with a broadphase
 and a narrowphase collision detection method. In the broad phase, we
 split the world up using an acceleration structure, so that we can only
-compare the collisions that we absolutely need to. 
+compare the collisions that we absolutely need to.
 
 */
 
@@ -197,13 +197,35 @@ void PhysicsSystem::NarrowPhase() {
 /*
 Integration of acceleration and velocity is split up, so that we can
 move objects multiple times during the course of a PhysicsUpdate,
-without worrying about repeated forces accumulating etc. 
+without worrying about repeated forces accumulating etc.
 
 This function will update both linear and angular acceleration,
 based on any forces that have been accumulated in the objects during
 the course of the previous game frame.
 */
 void PhysicsSystem::IntegrateAccel(float dt) {
+	GameObjectIterator first;
+	GameObjectIterator last;
+	gameWorld.GetObjectIterators(first, last);
+
+	for (auto i = first; i != last; ++i) {
+		PhysicsObject* object = (*i)->GetPhysicsObject();
+		if (object == nullptr) {
+			continue; // No physics object for this GameObject !
+		}
+		float inverseMass = object->GetInverseMass();
+
+		Vector3 linearVel = object->GetLinearVelocity();
+		Vector3 force = object->GetForce();
+		Vector3 accel = force * inverseMass;
+
+		if (applyGravity && inverseMass > 0) {
+			accel += gravity; // don ’t move infinitely heavy things
+		}
+
+		linearVel += accel * dt; // integrate accel !
+		object->SetLinearVelocity(linearVel);
+	}
 
 }
 /*
@@ -213,7 +235,27 @@ throughout a physics update, to slowly move the objects through
 the world, looking for collisions.
 */
 void PhysicsSystem::IntegrateVelocity(float dt) {
+	GameObjectIterator first;
+	GameObjectIterator last;
+	gameWorld.GetObjectIterators(first, last);
+	float dampingFactor = 1.0f - 0.95f;
+	float frameDamping = powf(dampingFactor, dt);
 
+	for (auto i = first; i != last; ++i) {
+		PhysicsObject* object = (*i)->GetPhysicsObject();
+		if (object == nullptr) {
+			continue;
+		}
+		Transform& transform = (*i)->GetTransform();
+		// Position Stuff
+		Vector3 position = transform.GetLocalPosition();
+		Vector3 linearVel = object->GetLinearVelocity();
+		position += linearVel * dt;
+		transform.SetLocalPosition(position);
+		// Linear Damping
+		linearVel = linearVel * frameDamping;
+		object->SetLinearVelocity(linearVel);
+	}
 }
 
 /*
@@ -237,7 +279,7 @@ void PhysicsSystem::ClearForces() {
 
 As part of the final physics tutorials, we add in the ability
 to constrain objects based on some extra calculation, allowing
-us to model springs and ropes etc. 
+us to model springs and ropes etc.
 
 */
 void PhysicsSystem::UpdateConstraints(float dt) {

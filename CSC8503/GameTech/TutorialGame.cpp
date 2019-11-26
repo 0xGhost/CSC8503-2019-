@@ -10,13 +10,13 @@
 using namespace NCL;
 using namespace CSC8503;
 
-TutorialGame::TutorialGame()	{
-	world		= new GameWorld();
-	renderer	= new GameTechRenderer(*world);
-	physics		= new PhysicsSystem(*world);
+TutorialGame::TutorialGame() {
+	world = new GameWorld();
+	renderer = new GameTechRenderer(*world);
+	physics = new PhysicsSystem(*world);
 
-	forceMagnitude	= 10.0f;
-	useGravity		= false;
+	forceMagnitude = 10.0f;
+	useGravity = false;
 	inSelectionMode = false;
 
 	Debug::SetRenderer(renderer);
@@ -26,7 +26,7 @@ TutorialGame::TutorialGame()	{
 
 /*
 
-Each of the little demo scenarios used in the game uses the same 2 meshes, 
+Each of the little demo scenarios used in the game uses the same 2 meshes,
 and the same texture and shader. There's no need to ever load in anything else
 for this module, even in the coursework, but you can add it if you like!
 
@@ -38,22 +38,22 @@ void TutorialGame::InitialiseAssets() {
 		(*into)->UploadToGPU();
 	};
 
-	loadFunc("cube.msh"		 , &cubeMesh);
-	loadFunc("sphere.msh"	 , &sphereMesh);
-	loadFunc("goose.msh"	 , &gooseMesh);
+	loadFunc("cube.msh", &cubeMesh);
+	loadFunc("sphere.msh", &sphereMesh);
+	loadFunc("goose.msh", &gooseMesh);
 	loadFunc("CharacterA.msh", &keeperMesh);
 	loadFunc("CharacterM.msh", &charA);
 	loadFunc("CharacterF.msh", &charB);
-	loadFunc("Apple.msh"	 , &appleMesh);
+	loadFunc("Apple.msh", &appleMesh);
 
-	basicTex	= (OGLTexture*)TextureLoader::LoadAPITexture("checkerboard.png");
+	basicTex = (OGLTexture*)TextureLoader::LoadAPITexture("checkerboard.png");
 	basicShader = new OGLShader("GameTechVert.glsl", "GameTechFrag.glsl");
 
 	InitCamera();
 	InitWorld();
 }
 
-TutorialGame::~TutorialGame()	{
+TutorialGame::~TutorialGame() {
 	delete cubeMesh;
 	delete sphereMesh;
 	delete gooseMesh;
@@ -134,8 +134,8 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::LockedObjectMovement() {
-	Matrix4 view		= world->GetMainCamera()->BuildViewMatrix();
-	Matrix4 camWorld	= view.Inverse();
+	Matrix4 view = world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 camWorld = view.Inverse();
 
 	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
 
@@ -182,7 +182,7 @@ void  TutorialGame::LockedCameraMovement() {
 
 
 void TutorialGame::DebugObjectMovement() {
-//If we've selected an object, we can manipulate it with some key presses
+	//If we've selected an object, we can manipulate it with some key presses
 	if (inSelectionMode && selectionObject) {
 		//Twist the selected object!
 		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
@@ -254,19 +254,22 @@ bool TutorialGame::SelectObject() {
 			if (world->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
-				
-				// Futher Work 1-2
+
+#if 1	// Futher Work 1-2
 				int layer = selectionObject->GetLayer();
-				selectionObject->SetLayer(-1);
+				selectionObject->SetLayer(0);
+				Vector3 a = selectionObject->GetTransform().GetWorldPosition();
+				Vector3 b = selectionObject->GetTransform().GetForward();
 				ray = Ray(selectionObject->GetTransform().GetWorldPosition(), selectionObject->GetTransform().GetForward());
 				Debug::DrawLine(ray.GetPosition(), (ray.GetDirection() * 5000 + ray.GetPosition()));
-				if (world->Raycast(ray, closestCollision, true))
+				RayCollision closestCollision1;
+				if (world->Raycast(ray, closestCollision1, true, ~0 & (0 << 0)))
 				{
-					GameObject *seeingObject = (GameObject*)closestCollision.node;
+					GameObject* seeingObject = (GameObject*)closestCollision1.node;
 					seeingObject->GetRenderObject()->SetColour(Vector4(0, 0, 1, 1));
 				}
 				selectionObject->SetLayer(layer);
-				// Futher Work 1-2
+#endif
 				return true;
 			}
 			else {
@@ -298,7 +301,50 @@ line - after the third, they'll be able to twist under torque aswell.
 */
 
 void TutorialGame::MoveSelectedObject() {
+	renderer->DrawString("Click Force:" + std::to_string(forceMagnitude),
+		Vector2(10, 20)); // Draw debug text at 10 ,20
+	forceMagnitude += Window::GetMouse()->GetWheelMovement() * 100.0f;
 
+	if (!selectionObject) {
+		return;// we haven ’t selected anything !
+	}
+	// Push the selected object !
+	if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
+		Ray ray = CollisionDetection::BuildRayFromMouse(
+			*world->GetMainCamera());
+
+		RayCollision closestCollision;
+		if (world->Raycast(ray, closestCollision, true)) {
+			if (closestCollision.node == selectionObject) {
+				selectionObject->GetPhysicsObject()->AddForce(ray.GetDirection() * forceMagnitude);
+			}
+		}
+	}
+	if (!inSelectionMode) return;
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::W)))
+	{
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0,0,1) * forceMagnitude);
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::S)))
+	{
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, -1) * forceMagnitude);
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::A)))
+	{
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(1, 0, 0) * forceMagnitude);
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::D)))
+	{
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(-1, 0, 0) * forceMagnitude);
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE)))
+	{
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 1, 0) * forceMagnitude);
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)))
+	{
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -1, 0) * forceMagnitude);
+	}
 }
 
 void TutorialGame::InitCamera() {
@@ -315,10 +361,10 @@ void TutorialGame::InitWorld() {
 	physics->Clear();
 
 	InitMixedGridWorld(10, 10, 3.5f, 3.5f);
-	GameObject *goose = AddGooseToWorld(Vector3(30, 2, 0));
+	GameObject* goose = AddGooseToWorld(Vector3(30, 2, 0));
 	//goose->SetLayer(2);
-	
-	GameObject *apple = AddAppleToWorld(Vector3(35, 2, 0));
+
+	GameObject* apple = AddAppleToWorld(Vector3(35, 2, 0));
 	//apple->SetLayer(3);
 
 	AddParkKeeperToWorld(Vector3(40, 2, 0));
@@ -357,7 +403,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 /*
 
 Builds a game object that uses a sphere mesh for its graphics, and a bounding sphere for its
-rigid body representation. This and the cube function will let you build a lot of 'simple' 
+rigid body representation. This and the cube function will let you build a lot of 'simple'
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
@@ -404,8 +450,8 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 
 GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 {
-	float size			= 1.0f;
-	float inverseMass	= 1.0f;
+	float size = 1.0f;
+	float inverseMass = 1.0f;
 
 	GameObject* goose = new GameObject();
 
@@ -413,7 +459,7 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	SphereVolume* volume = new SphereVolume(size);
 	goose->SetBoundingVolume((CollisionVolume*)volume);
 
-	goose->GetTransform().SetWorldScale(Vector3(size,size,size) );
+	goose->GetTransform().SetWorldScale(Vector3(size, size, size));
 	goose->GetTransform().SetWorldPosition(position);
 
 	goose->SetRenderObject(new RenderObject(&goose->GetTransform(), gooseMesh, nullptr, basicShader));
@@ -536,8 +582,8 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 }
 
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
-	for (int x = 1; x < numCols+1; ++x) {
-		for (int z = 1; z < numRows+1; ++z) {
+	for (int x = 1; x < numCols + 1; ++x) {
+		for (int z = 1; z < numRows + 1; ++z) {
 			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 			AddCubeToWorld(position, cubeDims, 1.0f);
 		}
@@ -549,8 +595,8 @@ void TutorialGame::BridgeConstraintTest() {
 	Vector3 cubeSize = Vector3(8, 8, 8);
 
 	float	invCubeMass = 5;
-	int		numLinks	= 25;
-	float	maxDistance	= 30;
+	int		numLinks = 25;
+	float	maxDistance = 30;
 	float	cubeDistance = 20;
 
 	Vector3 startPos = Vector3(500, 1000, 500);
@@ -573,11 +619,11 @@ void TutorialGame::BridgeConstraintTest() {
 }
 
 void TutorialGame::SimpleGJKTest() {
-	Vector3 dimensions		= Vector3(5, 5, 5);
+	Vector3 dimensions = Vector3(5, 5, 5);
 	Vector3 floorDimensions = Vector3(100, 2, 100);
 
 	GameObject* fallingCube = AddCubeToWorld(Vector3(0, 20, 0), dimensions, 10.0f);
-	GameObject* newFloor	= AddCubeToWorld(Vector3(0, 0, 0), floorDimensions, 0.0f);
+	GameObject* newFloor = AddCubeToWorld(Vector3(0, 0, 0), floorDimensions, 0.0f);
 
 	delete fallingCube->GetBoundingVolume();
 	delete newFloor->GetBoundingVolume();

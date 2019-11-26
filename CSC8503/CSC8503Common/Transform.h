@@ -71,7 +71,7 @@ namespace NCL {
 
 			Vector3 GetForward() const
 			{
-				return Vector3(worldMatrix.array[8], worldMatrix.array[9], worldMatrix.array[10]);
+				return Vector3(-worldMatrix.array[8], -worldMatrix.array[9], -worldMatrix.array[10]);
 			}
 
 			void UpdateMatrices();

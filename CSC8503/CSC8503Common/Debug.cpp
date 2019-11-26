@@ -28,6 +28,11 @@ void Debug::DrawLine(const Vector3& startpoint, const Vector3& endpoint, const V
 	lineEntries.emplace_back(newEntry);
 }
 
+void Debug::DrawLine(const Vector3& startpoint, const Vector3& direction, const float& length, const Vector4& colour)
+{
+	Debug::DrawLine(startpoint, startpoint + direction.Normalised() * length, colour);
+}
+
 void Debug::FlushRenderables() {
 	if (!renderer) {
 		return;
