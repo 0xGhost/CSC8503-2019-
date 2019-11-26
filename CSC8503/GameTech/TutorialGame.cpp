@@ -249,11 +249,24 @@ bool TutorialGame::SelectObject() {
 			}
 
 			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
-
+			Debug::DrawLine(ray.GetPosition(), (ray.GetDirection() * 5000 + ray.GetPosition()));
 			RayCollision closestCollision;
 			if (world->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+				
+				// Futher Work 1-2
+				int layer = selectionObject->GetLayer();
+				selectionObject->SetLayer(-1);
+				ray = Ray(selectionObject->GetTransform().GetWorldPosition(), selectionObject->GetTransform().GetForward());
+				Debug::DrawLine(ray.GetPosition(), (ray.GetDirection() * 5000 + ray.GetPosition()));
+				if (world->Raycast(ray, closestCollision, true))
+				{
+					GameObject *seeingObject = (GameObject*)closestCollision.node;
+					seeingObject->GetRenderObject()->SetColour(Vector4(0, 0, 1, 1));
+				}
+				selectionObject->SetLayer(layer);
+				// Futher Work 1-2
 				return true;
 			}
 			else {
@@ -302,8 +315,11 @@ void TutorialGame::InitWorld() {
 	physics->Clear();
 
 	InitMixedGridWorld(10, 10, 3.5f, 3.5f);
-	AddGooseToWorld(Vector3(30, 2, 0));
-	AddAppleToWorld(Vector3(35, 2, 0));
+	GameObject *goose = AddGooseToWorld(Vector3(30, 2, 0));
+	//goose->SetLayer(2);
+	
+	GameObject *apple = AddAppleToWorld(Vector3(35, 2, 0));
+	//apple->SetLayer(3);
 
 	AddParkKeeperToWorld(Vector3(40, 2, 0));
 	AddCharacterToWorld(Vector3(45, 2, 0));

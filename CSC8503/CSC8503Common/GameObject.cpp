@@ -6,7 +6,7 @@ using namespace NCL::CSC8503;
 GameObject::GameObject(string objectName)	{
 	name			= objectName;
 	isActive		= true;
-	layer = 1;
+	layer = 0;
 	boundingVolume	= nullptr;
 	physicsObject	= nullptr;
 	renderObject	= nullptr;

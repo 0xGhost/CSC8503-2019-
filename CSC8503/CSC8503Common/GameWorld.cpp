@@ -87,12 +87,12 @@ void GameWorld::UpdateQuadTree() {
 	//}
 }
 
-bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject) const {
+bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, unsigned int layerMask) const {
 	//The simplest raycast just goes through each object and sees if there's a collision
 	RayCollision collision;
 
 	for (auto& i : gameObjects) {
-		if (!i->GetBoundingVolume()) { //objects might not be collideable etc...
+		if (!i->GetBoundingVolume() || ((1 << i->GetLayer()) & layerMask) == 0) { //objects might not be collideable etc... // add: layerMask
 			continue;
 		}
 		RayCollision thisCollision;
@@ -118,12 +118,6 @@ bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObje
 	}
 	return false;
 }
-
-bool NCL::CSC8503::GameWorld::Raycast(Ray& r, RayCollision& closestCollision, unsigned int layerMask, bool closestObject) const
-{
-	return false;
-}
-
 
 /*
 Constraint Tutorial Stuff
