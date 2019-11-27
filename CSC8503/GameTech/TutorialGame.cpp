@@ -66,6 +66,7 @@ TutorialGame::~TutorialGame() {
 }
 
 void TutorialGame::UpdateGame(float dt) {
+	this->dt = dt;
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
@@ -256,6 +257,8 @@ bool TutorialGame::SelectObject() {
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
 
 #if 1	// Futher Work 1-2
+				Debug::DrawLine(selectionObject->GetTransform().GetWorldPosition(), (closestCollision.collidedAt - selectionObject->GetTransform().GetWorldPosition()) * 500 + selectionObject->GetTransform().GetWorldPosition());
+				//Debug::DrawLine(selectionObject->GetTransform().GetWorldPosition(), (closestCollision.collidedAt -selectionObject->GetTransform().GetWorldPosition()), 500);
 				int layer = selectionObject->GetLayer();
 				selectionObject->SetLayer(0);
 				Vector3 a = selectionObject->GetTransform().GetWorldPosition();
@@ -263,7 +266,7 @@ bool TutorialGame::SelectObject() {
 				ray = Ray(selectionObject->GetTransform().GetWorldPosition(), selectionObject->GetTransform().GetForward());
 				Debug::DrawLine(ray.GetPosition(), (ray.GetDirection() * 5000 + ray.GetPosition()));
 				RayCollision closestCollision1;
-				if (world->Raycast(ray, closestCollision1, true, ~0 & (0 << 0)))
+				if (world->Raycast(ray, closestCollision1, true, ~0U << 1))
 				{
 					GameObject* seeingObject = (GameObject*)closestCollision1.node;
 					seeingObject->GetRenderObject()->SetColour(Vector4(0, 0, 1, 1));
@@ -303,7 +306,7 @@ line - after the third, they'll be able to twist under torque aswell.
 void TutorialGame::MoveSelectedObject() {
 	renderer->DrawString("Click Force:" + std::to_string(forceMagnitude),
 		Vector2(10, 20)); // Draw debug text at 10 ,20
-	forceMagnitude += Window::GetMouse()->GetWheelMovement() * 100.0f;
+	forceMagnitude += Window::GetMouse()->GetWheelMovement() * 10.0f;
 
 	if (!selectionObject) {
 		return;// we haven ’t selected anything !
@@ -316,34 +319,35 @@ void TutorialGame::MoveSelectedObject() {
 		RayCollision closestCollision;
 		if (world->Raycast(ray, closestCollision, true)) {
 			if (closestCollision.node == selectionObject) {
-				selectionObject->GetPhysicsObject()->AddForce(ray.GetDirection() * forceMagnitude);
+				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
+
 			}
 		}
 	}
 	if (!inSelectionMode) return;
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::W)))
 	{
-		selectionObject->GetPhysicsObject()->AddForce(Vector3(0,0,1) * forceMagnitude);
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, 1) * forceMagnitude * dt);
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::S)))
 	{
-		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, -1) * forceMagnitude);
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 0, -1) * forceMagnitude * dt);
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::A)))
 	{
-		selectionObject->GetPhysicsObject()->AddForce(Vector3(1, 0, 0) * forceMagnitude);
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(1, 0, 0) * forceMagnitude * dt);
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::D)))
 	{
-		selectionObject->GetPhysicsObject()->AddForce(Vector3(-1, 0, 0) * forceMagnitude);
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(-1, 0, 0) * forceMagnitude * dt);
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::SPACE)))
 	{
-		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 1, 0) * forceMagnitude);
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, 1, 0) * forceMagnitude * dt);
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::SHIFT)))
 	{
-		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -1, 0) * forceMagnitude);
+		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -1, 0) * forceMagnitude * dt);
 	}
 }
 
@@ -407,7 +411,7 @@ rigid body representation. This and the cube function will let you build a lot o
 physics worlds. You'll probably need another function for the creation of OBB cubes too.
 
 */
-GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass) {
+GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass, bool isHollow) {
 	GameObject* sphere = new GameObject();
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
@@ -420,7 +424,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	sphere->SetPhysicsObject(new PhysicsObject(&sphere->GetTransform(), sphere->GetBoundingVolume()));
 
 	sphere->GetPhysicsObject()->SetInverseMass(inverseMass);
-	sphere->GetPhysicsObject()->InitSphereInertia();
+	sphere->GetPhysicsObject()->InitSphereInertia(isHollow);
 
 	world->AddGameObject(sphere);
 
@@ -430,7 +434,8 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
 	GameObject* cube = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(dimensions);
+	OBBVolume* volume = new OBBVolume(dimensions);
+	//AABBVolume* volume = new AABBVolume(dimensions);
 
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -564,7 +569,7 @@ void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacin
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
 	float sphereRadius = 1.0f;
-	Vector3 cubeDims = Vector3(1, 1, 1);
+	Vector3 cubeDims = Vector3(1, 10, 1);
 
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
@@ -574,7 +579,7 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 				AddCubeToWorld(position, cubeDims);
 			}
 			else {
-				AddSphereToWorld(position, sphereRadius);
+				AddSphereToWorld(position, sphereRadius, true);
 			}
 		}
 	}

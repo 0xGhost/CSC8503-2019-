@@ -123,6 +123,8 @@ bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& wo
 		return false;
 	}
 	float sNorm = sphereDist / sphereRadius;
+	std::cout << cos(asin(sNorm)) << ' ';
+	std::cout << cos(DegreesToRadians(sNorm * 90.0f)) << '\n';
 	sNorm = cos(asin(sNorm));
 	//sNorm = cos(DegreesToRadians(sNorm * 90.0f));
 

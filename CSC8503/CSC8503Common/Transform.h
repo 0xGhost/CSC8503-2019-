@@ -74,6 +74,16 @@ namespace NCL {
 				return Vector3(-worldMatrix.array[8], -worldMatrix.array[9], -worldMatrix.array[10]);
 			}
 
+			Vector3 GetUp() const
+			{
+				return Vector3(worldMatrix.array[4], worldMatrix.array[5], worldMatrix.array[6]);
+			}
+
+			Vector3 GetRight() const
+			{
+				return Vector3(worldMatrix.array[0], worldMatrix.array[1], worldMatrix.array[2]);
+			}
+
 			void UpdateMatrices();
 
 		protected:

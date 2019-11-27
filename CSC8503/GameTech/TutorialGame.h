@@ -38,7 +38,7 @@ namespace NCL {
 			void LockedCameraMovement();
 
 			GameObject* AddFloorToWorld(const Vector3& position);
-			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f);
+			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f, bool isHollow = false);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
 			//IT'S HAPPENING
 			GameObject* AddGooseToWorld(const Vector3& position);
@@ -69,6 +69,8 @@ namespace NCL {
 			OGLMesh*	appleMesh	= nullptr;
 			OGLMesh*	charA		= nullptr;
 			OGLMesh*	charB		= nullptr;
+
+			float dt;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

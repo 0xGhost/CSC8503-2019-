@@ -60,9 +60,9 @@ void PhysicsObject::InitCubeInertia() {
 	inverseInertia.z = (12.0f * inverseMass) / (dimsSqr.x + dimsSqr.y);
 }
 
-void PhysicsObject::InitSphereInertia() {
+void PhysicsObject::InitSphereInertia(bool isHollow) {
 	float radius	= transform->GetLocalScale().GetMaxElement();
-	float i			= 2.5f * inverseMass / (radius*radius);
+	float i			= (isHollow? 1.5f : 2.5f) * inverseMass / (radius*radius);
 
 	inverseInertia	= Vector3(i, i, i);
 }
