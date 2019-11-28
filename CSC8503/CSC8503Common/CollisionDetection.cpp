@@ -123,8 +123,6 @@ bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& wo
 		return false;
 	}
 	float sNorm = sphereDist / sphereRadius;
-	std::cout << cos(asin(sNorm)) << ' ';
-	std::cout << cos(DegreesToRadians(sNorm * 90.0f)) << '\n';
 	sNorm = cos(asin(sNorm));
 	//sNorm = cos(DegreesToRadians(sNorm * 90.0f));
 
@@ -306,6 +304,22 @@ bool CollisionDetection::AABBSphereIntersection(const AABBVolume& volumeA, const
 bool CollisionDetection::OBBIntersection(
 	const OBBVolume& volumeA, const Transform& worldTransformA,
 	const OBBVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
+
+	Vector3 boxAPos = worldTransformA.GetWorldPosition();
+	Vector3 boxBPos = worldTransformB.GetWorldPosition();
+
+	Vector3 boxASize = volumeA.GetHalfDimensions();
+	Vector3 boxBSize = volumeB.GetHalfDimensions();
+	float x, y, z;
+	x = boxASize.x;
+	y = boxASize.y;
+	z = boxASize.z;
+
+	Vector3 boxARoughSize = worldTransformA.GetWorldOrientation() * boxASize;
+	Vector3 boxBRoughSize = worldTransformA.GetWorldOrientation() * boxBSize;
+
+	//bool roughOverlap = AABBTest(boxAPos, boxBPos, boxASize, boxBSize);
+
 	return false;
 }
 

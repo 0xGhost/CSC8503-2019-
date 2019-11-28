@@ -1,4 +1,4 @@
-#pragma once
+	#pragma once
 #include "../../Common/Vector3.h"
 #include "../../Common/Matrix3.h"
 
@@ -39,6 +39,10 @@ namespace NCL {
 				return inverseMass;
 			}
 
+			float GetElasticity() const {
+				return elasticity;
+			}
+
 			void ApplyAngularImpulse(const Vector3& force);
 			void ApplyLinearImpulse(const Vector3& force);
 			
@@ -57,6 +61,10 @@ namespace NCL {
 
 			void SetAngularVelocity(const Vector3& v) {
 				angularVelocity = v;
+			}
+
+			void SetElasticity(const float& e) {
+				elasticity = e;
 			}
 
 			void InitCubeInertia();
