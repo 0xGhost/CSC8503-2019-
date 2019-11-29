@@ -123,7 +123,9 @@
     <ClInclude Include="Debug.h">
       <Filter>Other</Filter>
     </ClInclude>
-    <ClInclude Include="CapsuleVolume.h" />
+    <ClInclude Include="CapsuleVolume.h">
+      <Filter>CollisionDetection</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CollisionDetection.cpp">
@@ -201,6 +203,8 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Other</Filter>
     </ClCompile>
-    <ClCompile Include="CapsuleVolume.cpp" />
+    <ClCompile Include="CapsuleVolume.cpp">
+      <Filter>CollisionDetection</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
