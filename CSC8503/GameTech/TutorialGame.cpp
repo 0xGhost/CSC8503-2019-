@@ -4,11 +4,16 @@
 #include "../../Plugins/OpenGLRendering/OGLShader.h"
 #include "../../Plugins/OpenGLRendering/OGLTexture.h"
 #include "../../Common/TextureLoader.h"
+#include <fstream>
+#include <stdexcept>
 
 #include "../CSC8503Common/PositionConstraint.h"
 
+#define check(a, b) ((a) & (b) ? 1 : 0)
+
 using namespace NCL;
 using namespace CSC8503;
+using namespace std;
 
 TutorialGame::TutorialGame() {
 	world = new GameWorld();
@@ -18,10 +23,61 @@ TutorialGame::TutorialGame() {
 	forceMagnitude = 100.0f;
 	useGravity = false;
 	inSelectionMode = false;
-
+	mapSize = Vector2(10, 10);
+	mapTiles = vector<int>(mapData, mapData + 100);
 	Debug::SetRenderer(renderer);
 
 	InitialiseAssets();
+}
+
+void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (invalid_argument)
+{
+	ifstream fileInput;
+	int numberOfPuzzles;
+	if (fileName.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"/*"a-to-zA-to-Z0-to-9_."*/) != std::string::npos)
+	{
+		throw invalid_argument("File name invalid \"" + fileName + "\".");
+	}
+
+	fileInput.open(fileName.c_str());
+
+	if (fileInput.fail())
+		throw invalid_argument("Fail to read the file \"" + fileName + "\".");
+
+	fileInput >> mapSize.x >> mapSize.y;
+
+	for (int x = 0; x < mapSize.x; x++)
+	{
+		for (int z = 0; z < mapSize.y; z++)
+		{
+			int type;
+			fileInput >> type;
+			if (type >= TileType::Invaild)
+				throw invalid_argument("File contain invalid data: " + type);
+			mapTiles.push_back(type);
+		}
+	}
+	
+	fileInput.close();
+}
+
+void NCL::CSC8503::TutorialGame::SaveMapData(const string& fileName) throw (invalid_argument)
+{
+	ofstream fileOutput;
+	fileOutput.open(fileName.c_str());
+
+	if (fileOutput.fail())
+		throw invalid_argument("Fail to write the file \"" + fileName + "\".");
+	fileOutput << mapSize.x << " " << mapSize.y << "\n";
+	for (int x = 0; x < mapSize.x; x++)
+	{
+		for (int z = 0; z < mapSize.y; z++)
+		{
+			fileOutput << mapTiles[x * mapSize.y + z] << " ";
+		}
+		fileOutput << "\n";
+	}
+	fileOutput.close();
 }
 
 /*
@@ -84,9 +140,11 @@ void TutorialGame::UpdateGame(float dt) {
 	}
 	Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
 							" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
-							" " + std::to_string((int)world->GetMainCamera()->GetPosition().z), Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f,0.1f,0.1f,1));
+							" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
+		Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f,0.1f,0.1f,1));
 	Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
-							" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()), Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f,0.1f,0.1f,1));
+							" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
+		Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f,0.1f,0.1f,1));
 	//Debug::Print("camera" + world->GetMainCamera()->GetPosition());
 
 	SelectObject();
@@ -108,6 +166,36 @@ void TutorialGame::UpdateKeys() {
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2)) {
 		InitCamera(); //F2 will reset the camera to a specific default place
+	}
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) { // Save Map
+		cout << "Enter the map name to save:" << endl;
+		string fileName;
+		cin >> fileName;
+		try
+		{
+			SaveMapData(fileName);
+			std::cout << "Solution file write successful." << endl;
+		}
+		catch (const invalid_argument & iae)
+		{
+			std::cout << "Unable to write data : " << iae.what() << "\n";
+		}
+	}
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) { // Load Map
+		cout << "Enter the map name to load:" << endl;
+		string fileName;
+		cin >> fileName;
+		try
+		{
+			LoadMapData(fileName);
+			std::cout << "Solution file read successful." << endl;
+		}
+		catch (const invalid_argument & iae)
+		{
+			std::cout << "Unable to read data : " << iae.what() << "\n";
+		}
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
@@ -235,6 +323,17 @@ letting you move the camera around.
 
 */
 bool TutorialGame::SelectObject() {
+
+	if(selectionObject)
+	Debug::Print("name:" + selectionObject->GetName() +
+		" pos:" + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().x) +
+		" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().y) +
+		" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().z) + 
+		" rot:" + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().x) +
+		" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().y) +
+		" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().z)
+		, Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+	
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
 		inSelectionMode = !inSelectionMode;
 		if (inSelectionMode) {
@@ -251,7 +350,7 @@ bool TutorialGame::SelectObject() {
 
 		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
 			if (selectionObject) {	//set colour to deselected;
-				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+				selectionObject->GetRenderObject()->SetColour(selectionColor);
 				selectionObject = nullptr;
 			}
 
@@ -260,12 +359,10 @@ bool TutorialGame::SelectObject() {
 			RayCollision closestCollision;
 			if (world->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
+				selectionColor = selectionObject->GetRenderObject()->GetColour();
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
 
-				Debug::Print("object:" + selectionObject->GetName() + 
-					" pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
-					" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
-					" " + std::to_string((int)world->GetMainCamera()->GetPosition().z), Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+				
 
 #if 0	// Futher Work 1-2
 				Debug::DrawLine(selectionObject->GetTransform().GetWorldPosition(), (closestCollision.collidedAt - selectionObject->GetTransform().GetWorldPosition()) * 500 + selectionObject->GetTransform().GetWorldPosition());
@@ -374,8 +471,42 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
+#if 1
+	for (int x = 0; x < mapSize.x; x++)
+	{
+		for(int z = 0; z < mapSize.y; z++)
+		{
+			float y = check(mapTiles[x * mapSize.y + z], TileType::Water) * WATERY
+				+ check(mapTiles[x * mapSize.y + z], TileType::HighGround) * HIGHGROUNDY;
+			Vector4 cubeColor = Vector4(0, 0, 0.2f, 1) * check(mapTiles[x * mapSize.y + z], TileType::Water)
+				+ Vector4(0, 0.2f, 0, 1) * check(mapTiles[x * mapSize.y + z], TileType::LowGround)
+				+ Vector4(0.5f, 0.2f, 0, 1) * check(mapTiles[x * mapSize.y + z], TileType::HighGround);
+			Vector3 position = Vector3(x * 2 * TILESIZE, y, z * 2 * TILESIZE);
 
-	InitMixedGridWorld(10, 10, 3.5f, 3.5f);
+			Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
+
+			AddCubeToWorld(position, cubeDims, 0, cubeColor);
+			if (mapTiles[x * mapSize.y + z] == TileType::Apple)
+			{
+				AddAppleToWorld(position + Vector3(0,2 + y,0));
+			}
+			if (mapTiles[x * mapSize.y + z] == TileType::Goose)
+			{
+				AddGooseToWorld(position + Vector3(0, 2 + y, 0));
+			}
+			if (mapTiles[x * mapSize.y + z] == TileType::Keeper)
+			{
+				AddParkKeeperToWorld(position + Vector3(0, 5 + y, 0));
+			}
+			if (mapTiles[x * mapSize.y + z] == TileType::Watcher)
+			{
+				AddCharacterToWorld(position + Vector3(0, 5 + y, 0));
+			}
+
+		}
+	}
+#else
+	InitMixedGridWorld(10, 10, 6.0f, 6.0f);
 	GameObject* goose = AddGooseToWorld(Vector3(30, 2, 0));
 	//goose->SetLayer(2);
 
@@ -386,6 +517,7 @@ void TutorialGame::InitWorld() {
 	AddCharacterToWorld(Vector3(45, 5, 0));
 
 	AddFloorToWorld(Vector3(0, -2, 0));
+#endif
 }
 
 //From here on it's functions to add in objects to the world!
@@ -442,7 +574,7 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	return sphere;
 }
 
-GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, Vector4 color) {
 	GameObject* cube = new GameObject("cube");
 
 	//OBBVolume* volume = new OBBVolume(dimensions);
@@ -453,11 +585,13 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->GetTransform().SetWorldPosition(position);
 	cube->GetTransform().SetWorldScale(dimensions);
 
-	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, basicTex, basicShader));
+	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, NULL/*basicTex*/, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
 
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
 	cube->GetPhysicsObject()->InitCubeInertia();
+
+	cube->GetRenderObject()->SetColour(color);
 
 	world->AddGameObject(cube);
 
@@ -580,7 +714,7 @@ void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacin
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
 	float sphereRadius = 1.0f;
-	Vector3 cubeDims = Vector3(1, 1, 1);
+	Vector3 cubeDims = Vector3(3, 3, 3);
 
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {

@@ -1,19 +1,35 @@
 #pragma once
 #include "GameTechRenderer.h"
 #include "../CSC8503Common/PhysicsSystem.h"
+const int TILESIZE = 5;
+const float WATERY = -0.5f;
+const float HIGHGROUNDY = 4;// -WATERY;
+
+
 
 
 namespace NCL {
 	namespace CSC8503 {
 		enum TileType
 		{
-			Water = 0,
+			
 			LowGround = 1, // 1 << 0
+
+			//Keeper = 2, // 1 << 1 
 			Keeper = 3, // 1 << 0 & 1 << 1 
+
 			HighGround = 4, // 1 << 2
+
+			//Watcher = 8, // 1 << 2
 			Watcher = 12, // 1 << 2 & 1 << 3
-			Apple = 16, // 1 << 4
-			Goose = 32, // 1 << 5
+
+			//Apple = 16, // 1 << 4
+			Apple = 17, // 1 << 0 & 1 << 4
+
+			//Goose = 32, // 1 << 5
+			Goose = 33, // 1 << 0 & 1 << 5
+
+			Water = 64, // 1 << 6
 
 			Invaild
 		};
@@ -26,6 +42,9 @@ namespace NCL {
 			virtual void UpdateGame(float dt);
 
 		protected:
+			void LoadMapData(const string& fileName);
+			void SaveMapData(const string& fileName);
+
 			void InitialiseAssets();
 
 			void InitCamera();
@@ -52,7 +71,7 @@ namespace NCL {
 
 			GameObject* AddFloorToWorld(const Vector3& position);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f, bool isHollow = false);
-			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f);
+			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, Vector4 color = Vector4(0,0,0,1));
 			//IT'S HAPPENING
 			GameObject* AddGooseToWorld(const Vector3& position);
 			GameObject* AddParkKeeperToWorld(const Vector3& position);
@@ -70,6 +89,7 @@ namespace NCL {
 			float		forceMagnitude;
 
 			GameObject* selectionObject = nullptr;
+			Vector4 selectionColor;
 
 			OGLMesh*	cubeMesh	= nullptr;
 			OGLMesh*	sphereMesh	= nullptr;
@@ -84,6 +104,22 @@ namespace NCL {
 			OGLMesh*	charB		= nullptr;
 
 			float dt;
+			Vector2 mapSize;
+			vector<int> mapTiles;
+			int mapData[100] = 
+			{
+				4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+				4, 1, 1, 1, 1, 4, 1, 4, 4, 4,
+				4, 1, 1, 1, 1, 4, 1, 12, 4, 4,
+				4, 1, 4, 1, 1, 4, 1, 1, 1, 17,
+				4, 1, 4, 64, 64, 1, 1, 1, 3, 4,
+				33, 1, 4, 64, 64, 4, 4, 4, 1, 4,
+				4, 1, 4, 64, 64, 4, 4, 4, 1, 4,
+				4, 1, 4, 64, 64, 1, 1, 1, 1, 4,
+				4, 1, 4, 1, 1, 1, 1, 1, 1, 4, 
+				4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+
+			};
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
