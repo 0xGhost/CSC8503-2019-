@@ -3,8 +3,9 @@
 
 using namespace NCL::CSC8503;
 
-GameObject::GameObject(string objectName)	{
+GameObject::GameObject(string objectName, string objTag)	{
 	name			= objectName;
+	tag				= objTag;
 	isActive		= true;
 	layer = 1;
 	boundingVolume	= nullptr;

@@ -5,6 +5,19 @@
 
 namespace NCL {
 	namespace CSC8503 {
+		enum TileType
+		{
+			Water = 0,
+			LowGround = 1, // 1 << 0
+			Keeper = 3, // 1 << 0 & 1 << 1 
+			HighGround = 4, // 1 << 2
+			Watcher = 12, // 1 << 2 & 1 << 3
+			Apple = 16, // 1 << 4
+			Goose = 32, // 1 << 5
+
+			Invaild
+		};
+
 		class TutorialGame		{
 		public:
 			TutorialGame();

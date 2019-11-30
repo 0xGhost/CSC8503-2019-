@@ -82,6 +82,12 @@ void TutorialGame::UpdateGame(float dt) {
 	else {
 		Debug::Print("(G)ravity off", Vector2(10, 40));
 	}
+	Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
+							" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
+							" " + std::to_string((int)world->GetMainCamera()->GetPosition().z), Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f,0.1f,0.1f,1));
+	Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
+							" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()), Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f,0.1f,0.1f,1));
+	//Debug::Print("camera" + world->GetMainCamera()->GetPosition());
 
 	SelectObject();
 	MoveSelectedObject();
@@ -256,7 +262,12 @@ bool TutorialGame::SelectObject() {
 				selectionObject = (GameObject*)closestCollision.node;
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
 
-#if 1	// Futher Work 1-2
+				Debug::Print("object:" + selectionObject->GetName() + 
+					" pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
+					" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
+					" " + std::to_string((int)world->GetMainCamera()->GetPosition().z), Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+#if 0	// Futher Work 1-2
 				Debug::DrawLine(selectionObject->GetTransform().GetWorldPosition(), (closestCollision.collidedAt - selectionObject->GetTransform().GetWorldPosition()) * 500 + selectionObject->GetTransform().GetWorldPosition());
 				//Debug::DrawLine(selectionObject->GetTransform().GetWorldPosition(), (closestCollision.collidedAt -selectionObject->GetTransform().GetWorldPosition()), 500);
 				int layer = selectionObject->GetLayer();

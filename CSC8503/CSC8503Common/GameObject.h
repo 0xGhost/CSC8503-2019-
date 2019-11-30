@@ -16,7 +16,7 @@ namespace NCL {
 
 		class GameObject	{
 		public:
-			GameObject(string name = "");
+			GameObject(string name = "", string tag = "");
 			~GameObject();
 
 			void SetBoundingVolume(CollisionVolume* vol) {
@@ -63,6 +63,10 @@ namespace NCL {
 				return name;
 			}
 
+			const string& GetTag() const {
+				return tag;
+			}
+
 			virtual void OnCollisionBegin(GameObject* otherObject) {
 				//std::cout << "OnCollisionBegin event occured!\n";
 			}
@@ -88,6 +92,7 @@ namespace NCL {
 
 			bool	isActive;
 			string	name;
+			string tag;
 			unsigned int layer;
 
 			Vector3 broadphaseAABB;
