@@ -15,7 +15,7 @@ TutorialGame::TutorialGame() {
 	renderer = new GameTechRenderer(*world);
 	physics = new PhysicsSystem(*world);
 
-	forceMagnitude = 10.0f;
+	forceMagnitude = 100.0f;
 	useGravity = false;
 	inSelectionMode = false;
 
@@ -423,7 +423,7 @@ physics worlds. You'll probably need another function for the creation of OBB cu
 
 */
 GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass, bool isHollow) {
-	GameObject* sphere = new GameObject();
+	GameObject* sphere = new GameObject("sphere");
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
 	SphereVolume* volume = new SphereVolume(radius);
@@ -443,10 +443,10 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 }
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
-	GameObject* cube = new GameObject();
+	GameObject* cube = new GameObject("cube");
 
-	OBBVolume* volume = new OBBVolume(dimensions);
-	//AABBVolume* volume = new AABBVolume(dimensions);
+	//OBBVolume* volume = new OBBVolume(dimensions);
+	AABBVolume* volume = new AABBVolume(dimensions);
 
 	cube->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -469,7 +469,7 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	float size = 1.0f;
 	float inverseMass = 1.0f;
 
-	GameObject* goose = new GameObject();
+	GameObject* goose = new GameObject("Goose");
 
 
 	SphereVolume* volume = new SphereVolume(size);
@@ -494,7 +494,7 @@ GameObject* TutorialGame::AddParkKeeperToWorld(const Vector3& position)
 	float meshSize = 4.0f;
 	float inverseMass = 0.5f;
 
-	GameObject* keeper = new GameObject("keeper");
+	GameObject* keeper = new GameObject("Keeper");
 
 	AABBVolume* volume = new AABBVolume(Vector3(0.3, 0.9f, 0.3) * meshSize);
 	keeper->SetBoundingVolume((CollisionVolume*)volume);
@@ -527,12 +527,12 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position) {
 		minVal.y = min(minVal.y, i.y);
 	}
 
-	GameObject* character = new GameObject("character");
+	GameObject* character = new GameObject("Character");
 
 	float r = rand() / (float)RAND_MAX;
 
 
-	AABBVolume* volume = new AABBVolume(Vector3(0.3, 0.9f, 0.3) * meshSize);
+	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform().SetWorldScale(Vector3(meshSize, meshSize, meshSize));
@@ -550,7 +550,7 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position) {
 }
 
 GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
-	GameObject* apple = new GameObject();
+	GameObject* apple = new GameObject("Apple");
 
 	SphereVolume* volume = new SphereVolume(0.7f);
 	apple->SetBoundingVolume((CollisionVolume*)volume);
@@ -590,7 +590,7 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 				AddCubeToWorld(position, cubeDims);
 			}
 			else {
-				AddSphereToWorld(position, sphereRadius, true);
+				AddSphereToWorld(position, sphereRadius);
 			}
 		}
 	}
