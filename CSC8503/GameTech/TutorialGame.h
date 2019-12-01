@@ -44,6 +44,7 @@ namespace NCL {
 		protected:
 			void LoadMapData(const string& fileName);
 			void SaveMapData(const string& fileName);
+			int IndexOf(int x, int y) { return x * mapSize.y + y; }
 
 			void InitialiseAssets();
 
@@ -64,6 +65,7 @@ namespace NCL {
 			void SimpleGJKTest();
 
 			bool SelectObject();
+			void EditSelectedObject();
 			void MoveSelectedObject();
 			void DebugObjectMovement();
 			void LockedObjectMovement();
@@ -71,6 +73,7 @@ namespace NCL {
 
 			GameObject* AddFloorToWorld(const Vector3& position);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f, bool isHollow = false);
+			void AddTileToWorld(int x, int z);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, Vector4 color = Vector4(0,0,0,1));
 			//IT'S HAPPENING
 			GameObject* AddGooseToWorld(const Vector3& position);
@@ -85,6 +88,7 @@ namespace NCL {
 
 			bool useGravity;
 			bool inSelectionMode;
+			bool isEditMode;
 
 			float		forceMagnitude;
 

@@ -73,7 +73,7 @@ void NCL::CSC8503::TutorialGame::SaveMapData(const string& fileName) throw (inva
 	{
 		for (int z = 0; z < mapSize.y; z++)
 		{
-			fileOutput << mapTiles[x * mapSize.y + z] << " ";
+			fileOutput << mapTiles[IndexOf(x, z)] << " ";
 		}
 		fileOutput << "\n";
 	}
@@ -148,6 +148,9 @@ void TutorialGame::UpdateGame(float dt) {
 	//Debug::Print("camera" + world->GetMainCamera()->GetPosition());
 
 	SelectObject();
+	if (isEditMode)
+		EditSelectedObject();
+	else
 	MoveSelectedObject();
 
 	world->UpdateWorld(dt);
@@ -169,7 +172,7 @@ void TutorialGame::UpdateKeys() {
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) { // Save Map
-		cout << "Enter the map name to save:" << endl;
+		cout << "Enter the map name to save: ";
 		string fileName;
 		cin >> fileName;
 		try
@@ -184,7 +187,7 @@ void TutorialGame::UpdateKeys() {
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) { // Load Map
-		cout << "Enter the map name to load:" << endl;
+		cout << "Enter the map name to load: ";
 		string fileName;
 		cin >> fileName;
 		try
@@ -196,6 +199,21 @@ void TutorialGame::UpdateKeys() {
 		{
 			std::cout << "Unable to read data : " << iae.what() << "\n";
 		}
+	}
+
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) { // edit mode
+		if (isEditMode) {
+			isEditMode = false; 
+			return;
+		}
+
+		cout << "Enter map size(two integer): ";
+		cin >> mapSize.x >> mapSize.y;
+		mapTiles.resize(mapSize.x * mapSize.y);
+		fill(mapTiles.begin(), mapTiles.end(), TileType::LowGround);
+		InitWorld();
+		selectionObject = nullptr;
+		isEditMode = true;
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
@@ -360,7 +378,7 @@ bool TutorialGame::SelectObject() {
 			if (world->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 				selectionColor = selectionObject->GetRenderObject()->GetColour();
-				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+				selectionObject->GetRenderObject()->SetColour(Vector4(1, 0.2f, 0.2f, 1));
 
 				
 
@@ -402,6 +420,50 @@ bool TutorialGame::SelectObject() {
 		renderer->DrawString("Press Q to change to select mode!", Vector2(10, 0));
 	}
 	return false;
+}
+
+void NCL::CSC8503::TutorialGame::EditSelectedObject()
+{
+	if (!selectionObject) {
+		return;// we haven ’t selected anything !
+	}
+	Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(10, 80), Vector4(0.2, 0.2, 0.2, 0.9));
+		Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
+	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
+	TileType type = (TileType)mapTiles[IndexOf(pos.x / 10, pos.z / 10)];
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::N)))
+	{
+		type = TileType::LowGround;
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::H)))
+	{
+		type = TileType::HighGround;
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::I)))
+	{
+		type = TileType::Watcher;
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::K)))
+	{
+		type = TileType::Keeper;
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::J)))
+	{
+		type = TileType::Goose;
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::U)))
+	{
+		type = TileType::Water;
+	}
+	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::O)))
+	{
+		type = TileType::Apple;
+	}
+	if (type == mapTiles[IndexOf(pos.x / 10, pos.z / 10)]) return;
+	mapTiles[IndexOf(pos.x / 10, pos.z / 10)] = type;
+	InitWorld();
+	selectionObject = nullptr;
+	
 }
 
 /*
@@ -476,33 +538,7 @@ void TutorialGame::InitWorld() {
 	{
 		for(int z = 0; z < mapSize.y; z++)
 		{
-			float y = check(mapTiles[x * mapSize.y + z], TileType::Water) * WATERY
-				+ check(mapTiles[x * mapSize.y + z], TileType::HighGround) * HIGHGROUNDY;
-			Vector4 cubeColor = Vector4(0, 0, 0.2f, 1) * check(mapTiles[x * mapSize.y + z], TileType::Water)
-				+ Vector4(0, 0.2f, 0, 1) * check(mapTiles[x * mapSize.y + z], TileType::LowGround)
-				+ Vector4(0.5f, 0.2f, 0, 1) * check(mapTiles[x * mapSize.y + z], TileType::HighGround);
-			Vector3 position = Vector3(x * 2 * TILESIZE, y, z * 2 * TILESIZE);
-
-			Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
-
-			AddCubeToWorld(position, cubeDims, 0, cubeColor);
-			if (mapTiles[x * mapSize.y + z] == TileType::Apple)
-			{
-				AddAppleToWorld(position + Vector3(0,2 + y,0));
-			}
-			if (mapTiles[x * mapSize.y + z] == TileType::Goose)
-			{
-				AddGooseToWorld(position + Vector3(0, 2 + y, 0));
-			}
-			if (mapTiles[x * mapSize.y + z] == TileType::Keeper)
-			{
-				AddParkKeeperToWorld(position + Vector3(0, 5 + y, 0));
-			}
-			if (mapTiles[x * mapSize.y + z] == TileType::Watcher)
-			{
-				AddCharacterToWorld(position + Vector3(0, 5 + y, 0));
-			}
-
+			AddTileToWorld(x, z);
 		}
 	}
 #else
@@ -572,6 +608,35 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	world->AddGameObject(sphere);
 
 	return sphere;
+}
+
+void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
+{
+	float y = check(mapTiles[IndexOf(x, z)], TileType::Water) * WATERY
+		+ check(mapTiles[IndexOf(x, z)], TileType::HighGround) * HIGHGROUNDY;
+	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 1) * check(mapTiles[IndexOf(x, z)], TileType::Water)
+		+ Vector4(0.3f, 1, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::LowGround)
+		+ Vector4(0.8f, 0.5f, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::HighGround);
+	Vector3 position = Vector3(x * 2 * TILESIZE, y, z * 2 * TILESIZE);
+
+	Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
+	if (mapTiles[IndexOf(x, z)] == TileType::Apple)
+	{
+		AddAppleToWorld(position + Vector3(0, 2 + y, 0));
+	}
+	if (mapTiles[IndexOf(x, z)] == TileType::Goose)
+	{
+		AddGooseToWorld(position + Vector3(0, 2 + y, 0));
+	}
+	if (mapTiles[IndexOf(x, z)] == TileType::Keeper)
+	{
+		AddParkKeeperToWorld(position + Vector3(0, 5 + y, 0));
+	}
+	if (mapTiles[IndexOf(x, z)] == TileType::Watcher)
+	{
+		AddCharacterToWorld(position + Vector3(0, 5 + y, 0));
+	}
+	AddCubeToWorld(position, cubeDims, 0, cubeColor);
 }
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, Vector4 color) {
