@@ -14,17 +14,15 @@ using namespace CSC8503;
 
 PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g) {
 	applyGravity = false;
-	useBroadPhase = false;
+	useBroadPhase = true;
 	dTOffset = 0.0f;
 	globalDamping = 0.95f;
 	SetGravity(Vector3(0.0f, -9.8f, 0.0f));
+	worldSize = Vector3(1024, 1000, 1024);
+	quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
 }
 
 PhysicsSystem::~PhysicsSystem() {
-}
-
-void PhysicsSystem::SetGravity(const Vector3& g) {
-	gravity = g;
 }
 
 /*
@@ -82,6 +80,7 @@ void PhysicsSystem::Update(float dt) {
 	while (dTOffset > iterationDt * 0.5) {
 		IntegrateAccel(iterationDt); //Update accelerations from external forces
 		if (useBroadPhase) {
+			UpdateQuadTree();
 			BroadPhase();
 			NarrowPhase();
 		}
@@ -108,6 +107,34 @@ void PhysicsSystem::Update(float dt) {
 	//std::cout << iteratorCount << " , " << iterationDt << std::endl;
 	float time = testTimer.GetTimeDeltaSeconds();
 	//std::cout << "Physics time taken: " << time << std::endl;
+}
+
+void NCL::CSC8503::PhysicsSystem::InitQuadTree()
+{
+	quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
+}
+
+void NCL::CSC8503::PhysicsSystem::UpdateQuadTree()
+{
+	//delete quadTree;
+
+	//quadTree = new QuadTree<GameObject*>(Vector2(512, 512), 6);
+
+	//quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
+
+	quadTree->Update();
+
+	std::vector<GameObject*>::const_iterator first;
+	std::vector<GameObject*>::const_iterator last;
+	gameWorld.GetObjectIterators(first, last);
+	for (auto i = first; i != last; ++i) {
+		Vector3 halfSizes;
+		if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+			continue;
+		}
+		Vector3 pos = (*i)->GetConstTransform().GetWorldPosition();
+		quadTree->Insert(*i, pos, halfSizes);
+	}
 }
 
 /*
@@ -168,7 +195,7 @@ void PhysicsSystem::BasicCollisionDetection() {
 			continue;
 		}
 		for (auto j = i + 1; j != last; ++j) {
-			if ((*j)->GetPhysicsObject() == nullptr) {
+			if (!CheckLayerCollision((*i)->GetLayer(), (*j)->GetLayer()) || (*j)->GetPhysicsObject() == nullptr) {
 				continue;
 			}
 			CollisionDetection::CollisionInfo info;
@@ -262,7 +289,36 @@ compare the collisions that we absolutely need to.
 */
 
 void PhysicsSystem::BroadPhase() {
+	broadphaseCollisions.clear();
+	//QuadTree<GameObject*> tree(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
+	//gameWorld.tree(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
 
+	//std::vector<GameObject*>::const_iterator first;
+	//std::vector<GameObject*>::const_iterator last;
+	//gameWorld.GetObjectIterators(first, last);
+	//for (auto i = first; i != last; ++i) {
+	//	Vector3 halfSizes;
+	//	if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+	//		continue;
+	//	}
+	//	Vector3 pos = (*i)->GetConstTransform().GetWorldPosition();
+	//	tree.Insert(*i, pos, halfSizes);
+	//}
+	quadTree->OperateOnContents([&](std::list<QuadTreeEntry<GameObject*>>& data) {
+		CollisionDetection::CollisionInfo info;
+
+		for (auto i = data.begin(); i != data.end(); ++i) {
+			for (auto j = std::next(i); j != data.end(); ++j) {
+				// is this pair of items already in the collision set -
+				// if the same pair is in another quadtree node together etc
+				info.a = min((*i).object, (*j).object);
+				info.b = max((*i).object, (*j).object);
+				if (CheckLayerCollision(info.a->GetLayer(), info.b->GetLayer()))
+					broadphaseCollisions.insert(info);
+			}
+		}
+	});
+	//quadTree->DebugDraw();
 }
 
 /*
@@ -271,6 +327,17 @@ The broadphase will now only give us likely collisions, so we can now go through
 and work out if they are truly colliding, and if so, add them into the main collision list
 */
 void PhysicsSystem::NarrowPhase() {
+	for (std::set<CollisionDetection::CollisionInfo>::iterator
+		i = broadphaseCollisions.begin();
+		i != broadphaseCollisions.end(); ++i) {
+		CollisionDetection::CollisionInfo info = *i;
+		if (CheckLayerCollision(info.a->GetLayer(), info.b->GetLayer())
+			&& CollisionDetection::ObjectIntersection(info.a, info.b, info)) {
+			info.framesLeft = numCollisionFrames;
+			ImpulseResolveCollision(*info.a, *info.b, info.point);
+			allCollisions.insert(info); // insert into our main set
+		}
+	}
 
 }
 
@@ -394,4 +461,37 @@ void PhysicsSystem::UpdateConstraints(float dt) {
 	for (auto i = first; i != last; ++i) {
 		(*i)->UpdateConstraint(dt);
 	}
+}
+
+bool PhysicsSystem::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, unsigned int layerMask) const {
+	//The simplest raycast just goes through each object and sees if there's a collision
+	RayCollision collision;
+
+	std::list<GameObject*> list = quadTree->RayCastList(r);
+
+	for (auto i : list) {
+		if (!i->GetBoundingVolume() || ((1 << i->GetLayer()) & layerMask) == 0) { //objects might not be collideable etc... // add: layerMask
+			continue;
+		}
+		RayCollision thisCollision;
+		if (CollisionDetection::RayIntersection(r, *i, thisCollision)) {
+			if (!closestObject) {
+				closestCollision = collision;
+				closestCollision.node = i;
+				return true;
+			}
+			else {
+				if (thisCollision.rayDistance < collision.rayDistance) {
+					thisCollision.node = i;
+					collision = thisCollision;
+				}
+			}
+		}
+	}
+	if (collision.node) {
+		closestCollision = collision;
+		closestCollision.node = collision.node;
+		return true;
+	}
+	return false;
 }

@@ -2,11 +2,14 @@
 #include "CollisionDetection.h"
 
 using namespace NCL::CSC8503;
-
-GameObject::GameObject(string objectName)	{
+unsigned long long GameObject::nextId = 0;
+GameObject::GameObject(string objectName, string objTag)	{
 	name			= objectName;
+	tag				= objTag;
 	isActive		= true;
-	layer = 1;
+	isStatic		= false;
+	layer			= 1;
+	id				= nextId++;
 	boundingVolume	= nullptr;
 	physicsObject	= nullptr;
 	renderObject	= nullptr;

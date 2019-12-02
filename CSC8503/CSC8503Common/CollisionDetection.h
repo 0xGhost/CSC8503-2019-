@@ -48,8 +48,8 @@ namespace NCL {
 			//This gets used as a quick hashing function to identify
 			//unique pairs of colliding objects in lists.
 			bool operator < (const CollisionInfo& other) const {
-				size_t otherHash = (size_t)other.a + ((size_t)other.b << 8);
-				size_t thisHash  = (size_t)a + ((size_t)b << 8);
+				size_t otherHash = (size_t)other.a->GetID() + ((size_t)other.b->GetID() << 8);
+				size_t thisHash  = (size_t)a->GetID() + ((size_t)b->GetID() << 8);
 
 				return (thisHash < otherHash);
 			}
