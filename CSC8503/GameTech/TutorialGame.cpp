@@ -19,6 +19,7 @@ TutorialGame::TutorialGame() {
 	world = new GameWorld();
 	renderer = new GameTechRenderer(*world);
 	physics = new PhysicsSystem(*world);
+	physics->InitLayerCollisionMatrix(true);
 
 	forceMagnitude = 100.0f;
 	useGravity = false;
@@ -375,7 +376,7 @@ bool TutorialGame::SelectObject() {
 			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
 			Debug::DrawLine(ray.GetPosition(), (ray.GetDirection() * 5000 + ray.GetPosition()));
 			RayCollision closestCollision;
-			if (world->Raycast(ray, closestCollision, true)) {
+			if (physics->Raycast(ray, closestCollision, true)) {
 				selectionObject = (GameObject*)closestCollision.node;
 				selectionColor = selectionObject->GetRenderObject()->GetColour();
 				selectionObject->GetRenderObject()->SetColour(Vector4(1, 0.2f, 0.2f, 1));
@@ -430,7 +431,7 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(10, 80), Vector4(0.2, 0.2, 0.2, 0.9));
 		Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
-	TileType type = (TileType)mapTiles[IndexOf(pos.x / 10, pos.z / 10)];
+	TileType type = (TileType)mapTiles[IndexOf(pos.x / 10 + mapSize.x / 2, pos.z / 10 + mapSize.y / 2)];
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::N)))
 	{
 		type = TileType::LowGround;
@@ -459,8 +460,8 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	{
 		type = TileType::Apple;
 	}
-	if (type == mapTiles[IndexOf(pos.x / 10, pos.z / 10)]) return;
-	mapTiles[IndexOf(pos.x / 10, pos.z / 10)] = type;
+	if (type == mapTiles[IndexOf((int)pos.x / 10 + (int)mapSize.x / 2, (int)pos.z / 10 + (int)mapSize.y / 2)]) return;
+	mapTiles[IndexOf((int)pos.x / 10 + (int)mapSize.x / 2, (int)pos.z / 10 + (int)mapSize.y / 2)] = type;
 	InitWorld();
 	selectionObject = nullptr;
 	
@@ -487,7 +488,7 @@ void TutorialGame::MoveSelectedObject() {
 			*world->GetMainCamera());
 
 		RayCollision closestCollision;
-		if (world->Raycast(ray, closestCollision, true)) {
+		if (physics->Raycast(ray, closestCollision, true)) {
 			if (closestCollision.node == selectionObject) {
 				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
 
@@ -534,6 +535,9 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 #if 1
+	physics->SetLayerCollision(2, 2, false);
+	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
+	physics->InitQuadTree();
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for(int z = 0; z < mapSize.y; z++)
@@ -617,26 +621,29 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 1) * check(mapTiles[IndexOf(x, z)], TileType::Water)
 		+ Vector4(0.3f, 1, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::LowGround)
 		+ Vector4(0.8f, 0.5f, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::HighGround);
-	Vector3 position = Vector3(x * 2 * TILESIZE, y, z * 2 * TILESIZE);
+	Vector3 position = Vector3((x - mapSize.x / 2) * 2 * TILESIZE + TILESIZE, y, (z - mapSize.y / 2) * 2 * TILESIZE + TILESIZE);
 
 	Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
+	GameObject* onTile;
 	if (mapTiles[IndexOf(x, z)] == TileType::Apple)
 	{
-		AddAppleToWorld(position + Vector3(0, 2 + y, 0));
+		onTile = AddAppleToWorld(position + Vector3(0, 2 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Goose)
 	{
-		AddGooseToWorld(position + Vector3(0, 2 + y, 0));
+		onTile = AddGooseToWorld(position + Vector3(0, 2 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Keeper)
 	{
-		AddParkKeeperToWorld(position + Vector3(0, 5 + y, 0));
+		onTile = AddParkKeeperToWorld(position + Vector3(0, 5 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Watcher)
 	{
-		AddCharacterToWorld(position + Vector3(0, 5 + y, 0));
+		onTile = AddCharacterToWorld(position + Vector3(0, 5 + y, 0));
 	}
-	AddCubeToWorld(position, cubeDims, 0, cubeColor);
+	GameObject *cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
+	cube->SetLayer(2);
+	cube->SetStatic(true);
 }
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, Vector4 color) {

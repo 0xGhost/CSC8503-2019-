@@ -39,7 +39,7 @@ namespace NCL {
 				shuffleObjects = state;
 			}
 
-			bool Raycast(Ray& r, RayCollision& closestCollision, bool closestObject = false, unsigned int layerMask = ~0) const;
+
 			//bool Raycast(Ray& r, RayCollision& closestCollision, unsigned int layerMask, bool closestObject = false) const;
 
 			virtual void UpdateWorld(float dt);
@@ -53,11 +53,6 @@ namespace NCL {
 			void GetConstraintIterators(
 				std::vector<Constraint*>::const_iterator& first,
 				std::vector<Constraint*>::const_iterator& last) const;
-
-			void InitLayerCollisionMatrix(bool b) { memset(LayerCollisionMatrix, b, sizeof(bool) * 32 * 32); }
-			// layer range: 0 ~ 31
-			bool CheckLayerCollision(unsigned int a, unsigned int b) const { return LayerCollisionMatrix[a][b]; }
-			void SetLayerCollision(unsigned int a, unsigned int b, bool c) { LayerCollisionMatrix[a][b] = c; LayerCollisionMatrix[b][a] = c; }
 
 		protected:
 			void UpdateTransforms();
@@ -73,7 +68,7 @@ namespace NCL {
 
 			bool shuffleConstraints;
 			bool shuffleObjects;
-			bool LayerCollisionMatrix[32][32];
+
 
 		};
 	}

@@ -14,58 +14,33 @@ namespace NCL {
 	namespace CSC8503 {
 		class NetworkObject;
 
-		class GameObject	{
+		class GameObject {
 		public:
 			GameObject(string name = "", string tag = "");
 			~GameObject();
 
-			void SetBoundingVolume(CollisionVolume* vol) {
-				boundingVolume = vol;
-			}
+			void SetBoundingVolume(CollisionVolume* vol) { boundingVolume = vol; }
 
-			const CollisionVolume* GetBoundingVolume() const {
-				return boundingVolume;
-			}
+			const CollisionVolume* GetBoundingVolume() const { return boundingVolume; }
 
-			bool IsActive() const {
-				return isActive;
-			}
+			bool IsActive() const { return isActive; }
+			bool IsStatic() const { return isStatic; }
 
-			const Transform& GetConstTransform() const {
-				return transform;
-			}
+			const string& GetName() const { return name; }
+			const string& GetTag() const { return tag; }
 
-			Transform& GetTransform() {
-				return transform;
-			}
+			const Transform& GetConstTransform() const { return transform; }
+			Transform& GetTransform() { return transform; }
 
-			RenderObject* GetRenderObject() const {
-				return renderObject;
-			}
+			RenderObject* GetRenderObject() const { return renderObject; }
+			PhysicsObject* GetPhysicsObject() const { return physicsObject; }
+			NetworkObject* GetNetworkObject() const { return networkObject; }
 
-			PhysicsObject* GetPhysicsObject() const {
-				return physicsObject;
-			}
+			void SetRenderObject(RenderObject* newObject) { renderObject = newObject; }
+			void SetPhysicsObject(PhysicsObject* newObject) { physicsObject = newObject; }
 
-			NetworkObject* GetNetworkObject() const {
-				return networkObject;
-			}
-
-			void SetRenderObject(RenderObject* newObject) {
-				renderObject = newObject;
-			}
-
-			void SetPhysicsObject(PhysicsObject* newObject) {
-				physicsObject = newObject;
-			}
-
-			const string& GetName() const {
-				return name;
-			}
-
-			const string& GetTag() const {
-				return tag;
-			}
+			void SetActive(bool a) { isActive = a; }
+			void SetStatic(bool s) { isStatic = s; }
 
 			virtual void OnCollisionBegin(GameObject* otherObject) {
 				//std::cout << "OnCollisionBegin event occured!\n";
@@ -78,21 +53,26 @@ namespace NCL {
 			unsigned int GetLayer() { return layer; }
 			void SetLayer(unsigned int l) { layer = l; } // layer range: 0 ~ 31
 
-			bool GetBroadphaseAABB(Vector3&outsize) const;
+			unsigned long long GetID() { return id; }
+
+			bool GetBroadphaseAABB(Vector3& outsize) const;
 
 			void UpdateBroadphaseAABB();
 
 		protected:
 			Transform			transform;
 
-			CollisionVolume*	boundingVolume;
-			PhysicsObject*		physicsObject;
-			RenderObject*		renderObject;
-			NetworkObject*		networkObject;
+			CollisionVolume* boundingVolume;
+			PhysicsObject* physicsObject;
+			RenderObject* renderObject;
+			NetworkObject* networkObject;
 
 			bool	isActive;
+			bool	isStatic;
 			string	name;
 			string tag;
+			unsigned long long id;
+			static unsigned long long nextId;
 			unsigned int layer;
 
 			Vector3 broadphaseAABB;

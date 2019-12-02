@@ -8,8 +8,9 @@ namespace NCL {
 	{
 	public:
 		static void Print(const std::string& text, const Vector2&pos, const Vector4& colour = Vector4(0.75f, 0.75f, 0.75f, 1));
-		static void DrawLine(const Vector3& startpoint, const Vector3& endpoint, const Vector4& colour = Vector4(1, 1, 1, 1));
-		static void DrawLine(const Vector3& startpoint, const Vector3& direction, const float& length, const Vector4& colour = Vector4(1, 1, 1, 1));
+		static void DrawLine(const Vector3& startpoint, const Vector3& endpoint, const Vector4& colour = Vector4(1, 0.2f, 0.2f, 1));
+		static void DrawLine(const Vector3& startpoint, const Vector3& direction, const float& length, const Vector4& colour = Vector4(1, 0.2f, 0.2f, 1));
+		static void DrawCube(const Vector3& position, const Vector3& halfSize, const Vector4& color = Vector4(1, 0.2f, 0.2f, 1));
 
 		static void SetRenderer(OGLRenderer* r) {
 			renderer = r;

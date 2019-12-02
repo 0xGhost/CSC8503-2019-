@@ -31,7 +31,7 @@ namespace NCL {
 
 			virtual void Update(float dt) {}
 
-			Vector2 GetWindowSize() const { return Vector2(currentWidth, currentHeight); }
+			Vector2 GetWindowSize() const { return Vector2((float)currentWidth, (float)currentHeight); }
 
 			void Render() {
 				BeginFrame();

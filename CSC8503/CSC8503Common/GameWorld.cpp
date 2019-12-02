@@ -15,8 +15,6 @@ GameWorld::GameWorld()	{
 
 	shuffleConstraints	= false;
 	shuffleObjects		= false;
-
-	InitLayerCollisionMatrix(true);
 }
 
 GameWorld::~GameWorld()	{
@@ -87,35 +85,7 @@ void GameWorld::UpdateQuadTree() {
 	//}
 }
 
-bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, unsigned int layerMask) const {
-	//The simplest raycast just goes through each object and sees if there's a collision
-	RayCollision collision;
-	for (auto& i : gameObjects) {
-		if (!i->GetBoundingVolume() || ((1 << i->GetLayer()) & layerMask) == 0) { //objects might not be collideable etc... // add: layerMask
-			continue;
-		}
-		RayCollision thisCollision;
-		if (CollisionDetection::RayIntersection(r, *i, thisCollision)) {
-			if (!closestObject) {
-				closestCollision = collision;
-				closestCollision.node = i;
-				return true;
-			}
-			else {
-				if (thisCollision.rayDistance < collision.rayDistance) {
-					thisCollision.node = i;
-					collision = thisCollision;
-				}
-			}
-		}
-	}
-	if (collision.node) {
-		closestCollision		= collision;
-		closestCollision.node	= collision.node;
-		return true;
-	}
-	return false;
-}
+
 
 /*
 Constraint Tutorial Stuff
