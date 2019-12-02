@@ -46,7 +46,7 @@ void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (inva
 		throw invalid_argument("Fail to read the file \"" + fileName + "\".");
 
 	fileInput >> mapSize.x >> mapSize.y;
-
+	mapTiles.clear();
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for (int z = 0; z < mapSize.y; z++)
@@ -147,6 +147,8 @@ void TutorialGame::UpdateGame(float dt) {
 							" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
 		Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f,0.1f,0.1f,1));
 	//Debug::Print("camera" + world->GetMainCamera()->GetPosition());
+	Debug::DrawLine(Vector3(), lightPos, Vector4(0.7, 0, 0, 1));
+
 
 	SelectObject();
 	if (isEditMode)
@@ -194,7 +196,7 @@ void TutorialGame::UpdateKeys() {
 		try
 		{
 			LoadMapData(fileName);
-			std::cout << "Solution file read successful." << endl;
+			std::cout << "Solution file read successful. Press F1 to use new map" << endl;
 		}
 		catch (const invalid_argument & iae)
 		{
@@ -344,7 +346,7 @@ letting you move the camera around.
 bool TutorialGame::SelectObject() {
 
 	if(selectionObject)
-	Debug::Print("name:" + selectionObject->GetName() +
+	Debug::Print("ID:" + std::to_string(selectionObject->GetID()) + " name:" + selectionObject->GetName() +
 		" pos:" + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().x) +
 		" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().y) +
 		" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().z) + 
@@ -539,7 +541,9 @@ void TutorialGame::InitWorld() {
 #if 1
 	physics->SetLayerCollision(2, 2, false);
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
-	physics->InitQuadTree();
+	lightPos = Vector3(-200.0f, 160.0f, -200.0f);
+	renderer->SetLightPosition(lightPos);
+	renderer->SetShadowProjMatrix(Matrix4::Perspective(200, 500, 1, 60));
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for(int z = 0; z < mapSize.y; z++)
@@ -547,6 +551,8 @@ void TutorialGame::InitWorld() {
 			AddTileToWorld(x, z);
 		}
 	}
+
+	physics->InitQuadTree();
 #else
 	InitMixedGridWorld(10, 10, 6.0f, 6.0f);
 	GameObject* goose = AddGooseToWorld(Vector3(30, 2, 0));
@@ -629,19 +635,19 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	GameObject* onTile;
 	if (mapTiles[IndexOf(x, z)] == TileType::Apple)
 	{
-		onTile = AddAppleToWorld(position + Vector3(0, 2 + y, 0));
+		onTile = AddAppleToWorld(position + Vector3(0, 8 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Goose)
 	{
-		onTile = AddGooseToWorld(position + Vector3(0, 2 + y, 0));
+		onTile = AddGooseToWorld(position + Vector3(0, 8 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Keeper)
 	{
-		onTile = AddParkKeeperToWorld(position + Vector3(0, 5 + y, 0));
+		onTile = AddParkKeeperToWorld(position + Vector3(0, 10 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Watcher)
 	{
-		onTile = AddCharacterToWorld(position + Vector3(0, 5 + y, 0));
+		onTile = AddCharacterToWorld(position + Vector3(0, 10 + y, 0));
 	}
 	GameObject *cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
 	cube->SetLayer(2);
@@ -659,7 +665,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->GetTransform().SetWorldPosition(position);
 	cube->GetTransform().SetWorldScale(dimensions);
 
-	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, NULL/*basicTex*/, basicShader));
+	cube->SetRenderObject(new RenderObject(&cube->GetTransform(), cubeMesh, nullptr/*basicTex*/, basicShader));
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
 
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);

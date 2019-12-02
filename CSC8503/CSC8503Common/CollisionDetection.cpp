@@ -56,7 +56,7 @@ bool CollisionDetection::RayBoxIntersection(const Ray& r, const Vector3& boxPos,
 	}
 	float bestT = tVals.GetMaxElement();
 	if (bestT < 0.0f) {
-		return false; // no backwards rays
+		//return false; // no backwards rays
 	}
 
 	Vector3 intersection = rayPos + (rayDir * bestT);
@@ -122,11 +122,12 @@ bool CollisionDetection::RaySphereIntersection(const Ray& r, const Transform& wo
 	if (sphereDist > sphereRadius) {
 		return false;
 	}
-	float sNorm = sphereDist / sphereRadius;
-	sNorm = cos(asin(sNorm));
+	//float sNorm = sphereDist / sphereRadius;
+	//sNorm = cos(asin(sNorm));
 	//sNorm = cos(DegreesToRadians(sNorm * 90.0f));
+	float offset = sqrt((sphereRadius * sphereRadius) - (sphereDist * sphereDist));
 
-	collision.rayDistance = sphereProj - (sphereRadius * sNorm);
+	collision.rayDistance = sphereProj - offset;
 	collision.collidedAt = r.GetPosition() +
 		(r.GetDirection() * collision.rayDistance);
 	return true;

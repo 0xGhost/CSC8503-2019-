@@ -17,6 +17,9 @@ namespace NCL {
 			GameTechRenderer(GameWorld& world);
 			~GameTechRenderer();
 
+			void SetLightPosition(Vector3 pos) { lightPosition = pos; }
+			void SetShadowProjMatrix(Matrix4 mat) { shadowProjMatrix = mat; }
+
 		protected:
 			void RenderFrame()	override;
 
@@ -38,6 +41,7 @@ namespace NCL {
 			GLuint		shadowTex;
 			GLuint		shadowFBO;
 			Matrix4     shadowMatrix;
+			Matrix4		shadowProjMatrix;
 
 			Vector4		lightColour;
 			float		lightRadius;

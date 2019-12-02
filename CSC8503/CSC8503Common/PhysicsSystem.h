@@ -51,6 +51,7 @@ namespace NCL {
 
 			GameWorld& gameWorld;
 			QuadTree<GameObject*>* quadTree;
+			QuadTree<GameObject*>* staticQuadTree;
 
 			bool	applyGravity;
 			Vector3 gravity;

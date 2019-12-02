@@ -5,7 +5,7 @@
 #include "../../Common/Quaternion.h"
 
 #include "Constraint.h"
-
+#include "QuadTree.h"
 #include "Debug.h"
 
 #include <functional>
@@ -14,15 +14,18 @@ using namespace CSC8503;
 
 PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g) {
 	applyGravity = false;
-	useBroadPhase = true;
+	useBroadPhase = false;
 	dTOffset = 0.0f;
 	globalDamping = 0.95f;
 	SetGravity(Vector3(0.0f, -9.8f, 0.0f));
 	worldSize = Vector3(1024, 1000, 1024);
-	quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
+	//quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
+	//staticQuadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
 }
 
 PhysicsSystem::~PhysicsSystem() {
+	delete quadTree;
+	delete staticQuadTree;
 }
 
 /*
@@ -111,15 +114,27 @@ void PhysicsSystem::Update(float dt) {
 
 void NCL::CSC8503::PhysicsSystem::InitQuadTree()
 {
-	quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
+	quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x + 1, worldSize.z + 1), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 3);
+	staticQuadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 3);
+
+	std::vector<GameObject*>::const_iterator first;
+	std::vector<GameObject*>::const_iterator last;
+	gameWorld.GetObjectIterators(first, last);
+	for (auto i = first; i != last; ++i) {
+		Vector3 halfSizes;
+		if (!(*i)->GetBroadphaseAABB(halfSizes) || (*i)->GetPhysicsObject()->GetInverseMass() != 0) {
+			continue;
+		}
+		Vector3 pos = (*i)->GetConstTransform().GetWorldPosition();
+		staticQuadTree->Insert(*i, pos, halfSizes);
+	}
+	useBroadPhase = true;
 }
 
 void NCL::CSC8503::PhysicsSystem::UpdateQuadTree()
 {
 	//delete quadTree;
-
 	//quadTree = new QuadTree<GameObject*>(Vector2(512, 512), 6);
-
 	//quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 6);
 
 	quadTree->Update();
@@ -129,7 +144,7 @@ void NCL::CSC8503::PhysicsSystem::UpdateQuadTree()
 	gameWorld.GetObjectIterators(first, last);
 	for (auto i = first; i != last; ++i) {
 		Vector3 halfSizes;
-		if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+		if (!(*i)->GetBroadphaseAABB(halfSizes) || (*i)->GetPhysicsObject()->GetInverseMass() == 0) {
 			continue;
 		}
 		Vector3 pos = (*i)->GetConstTransform().GetWorldPosition();
@@ -277,6 +292,7 @@ void NCL::CSC8503::PhysicsSystem::ResolveSpringCollision(GameObject& a, GameObje
 	Transform& transformB = b.GetTransform();
 
 	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
+	// TODO
 }
 
 /*
@@ -316,9 +332,20 @@ void PhysicsSystem::BroadPhase() {
 				if (CheckLayerCollision(info.a->GetLayer(), info.b->GetLayer()))
 					broadphaseCollisions.insert(info);
 			}
+			
+			std::list<GameObject*> list = staticQuadTree->EntryIntersectionList(*i);
+			for (auto j : list)
+			{
+				info.a = min((*i).object, j);
+				info.b = max((*i).object, j);
+				if (CheckLayerCollision(info.a->GetLayer(), info.b->GetLayer()))
+					broadphaseCollisions.insert(info);
+			}
 		}
 	});
-	//quadTree->DebugDraw();
+
+	quadTree->DebugDraw(Vector4(0.9f,0.2f,0.5f,1));
+	staticQuadTree->DebugDraw(Vector4(0.7f, 0.5f, 0.2f, 1));
 }
 
 /*
@@ -408,7 +435,10 @@ void PhysicsSystem::IntegrateVelocity(float dt) {
 		Vector3 position = transform.GetLocalPosition();
 		Vector3 linearVel = object->GetLinearVelocity();
 		position += linearVel * dt;
+		//transform.SetLocalPosition(position);
 		transform.SetLocalPosition(position);
+		transform.SetWorldPosition(position);
+
 		// Linear Damping
 		linearVel = linearVel * frameDamping;
 		object->SetLinearVelocity(linearVel);
@@ -422,6 +452,8 @@ void PhysicsSystem::IntegrateVelocity(float dt) {
 		orientation.Normalise();
 
 		transform.SetLocalOrientation(orientation);
+
+
 
 		// Damp the angular velocity too
 		angVel = angVel * frameDamping;
@@ -468,7 +500,9 @@ bool PhysicsSystem::Raycast(Ray& r, RayCollision& closestCollision, bool closest
 	RayCollision collision;
 
 	std::list<GameObject*> list = quadTree->RayCastList(r);
-
+	std::list<GameObject*> list1 = staticQuadTree->RayCastList(r);
+	list.insert(list.end(), list1.begin(), list1.end());
+	
 	for (auto i : list) {
 		if (!i->GetBoundingVolume() || ((1 << i->GetLayer()) & layerMask) == 0) { //objects might not be collideable etc... // add: layerMask
 			continue;
@@ -493,5 +527,6 @@ bool PhysicsSystem::Raycast(Ray& r, RayCollision& closestCollision, bool closest
 		closestCollision.node = collision.node;
 		return true;
 	}
+
 	return false;
 }

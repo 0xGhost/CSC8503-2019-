@@ -124,6 +124,7 @@ namespace NCL {
 				4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
 
 			};
+			Vector3 lightPos;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

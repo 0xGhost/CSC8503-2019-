@@ -92,11 +92,11 @@ namespace NCL {
 					Vector2(halfSize.x, -halfSize.y), halfSize, tree);
 			}
 
-			void DebugDraw() {
-				Debug::DrawCube(Vector3(position.x, 10, position.y), Vector3(size.x, 20, size.y), Vector4(0.7f,0.2f,0,1));
+			void DebugDraw(Vector4 color) {
+				Debug::DrawCube(Vector3(position.x, 10, position.y), Vector3(size.x, 20, size.y), color);
 				if (children) {
 					for (int i = 0; i < 4; ++i) {
-						children[i].DebugDraw();
+						children[i].DebugDraw(color);
 					}
 				}
 			}
@@ -127,6 +127,24 @@ namespace NCL {
 					else {
 						if (!contents.empty()) {
 							for(auto i : contents)
+								list.push_back(i.object);
+						}
+					}
+				}
+			}
+
+			void EntryIntersectionList(QuadTreeEntry<T>& entry, std::list<T>& list)
+			{
+				if (CollisionDetection::AABBTest(entry.pos, Vector3(position.x, 0, position.y), entry.size, Vector3(size.x, 100, size.y)))
+				{
+					if (children) {
+						for (int i = 0; i < 4; ++i) {
+							children[i].EntryIntersectionList(entry, list);
+						}
+					}
+					else {
+						if (!contents.empty()) {
+							for (auto i : contents)
 								list.push_back(i.object);
 						}
 					}
@@ -185,8 +203,8 @@ namespace NCL {
 
 			//void Check()
 
-			void DebugDraw() {
-				root->DebugDraw();
+			void DebugDraw(Vector4 color = Vector4(0.7f, 0.2f, 0, 1)) {
+				root->DebugDraw(color);
 			}
 
 			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc  func) {
@@ -196,6 +214,13 @@ namespace NCL {
 			std::list<T> RayCastList(Ray& r) {
 				std::list<T> list;
 				root->RayCastList(r, list);
+				return list;
+			}
+
+			std::list<T> EntryIntersectionList(QuadTreeEntry<T>& entry)
+			{
+				std::list<T> list;
+				root->EntryIntersectionList(entry, list);
 				return list;
 			}
 
