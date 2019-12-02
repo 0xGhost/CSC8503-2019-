@@ -27,16 +27,16 @@ bool CollisionDetection::RayIntersection(const Ray& r, GameObject& object, RayCo
 	}
 	switch (volume->type) {
 	case VolumeType::AABB: return RayAABBIntersection(r,
-		transform, (const AABBVolume&)* volume, collision);
+		transform, (const AABBVolume&)*volume, collision);
 	case VolumeType::OBB: return RayOBBIntersection(r,
-		transform, (const OBBVolume&)* volume, collision);
+		transform, (const OBBVolume&)*volume, collision);
 	case VolumeType::Sphere: return RaySphereIntersection(r,
-		transform, (const SphereVolume&)* volume, collision);
+		transform, (const SphereVolume&)*volume, collision);
 	}
 	return false;
 }
 
-bool CollisionDetection::RayBoxIntersection(const Ray& r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision) {
+bool CollisionDetection::RayBoxIntersection(const Ray& r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision, bool insideTest) {
 	Vector3 boxMin = boxPos - boxSize;
 	Vector3 boxMax = boxPos + boxSize;
 
@@ -44,19 +44,42 @@ bool CollisionDetection::RayBoxIntersection(const Ray& r, const Vector3& boxPos,
 	Vector3 rayPos = r.GetPosition();
 	Vector3 rayDir = r.GetDirection();
 
+	bool isInside = false;
+
+	if (insideTest)
+	{
+		isInside = true;
+		for (int i = 0; i < 3; i++)
+		{
+			if (rayPos[i] < boxMin[i] || rayPos[i] > boxMax[i])
+			{
+				isInside = false;
+				break;
+			}
+		}
+	}
+
 	Vector3 tVals(-1, -1, -1);
 
 	for (int i = 0; i < 3; ++i) { // get best 3 intersections
 		if (rayDir[i] > 0) {
-			tVals[i] = (boxMin[i] - rayPos[i]) / rayDir[i];
+			//if(boxMin[i] < rayPos[i])
+				//tVals[i] = (boxMax[i] - rayPos[i]) / rayDir[i];
+			//else
+			tVals[i] = ((isInside ? boxMax[i] : boxMin[i]) - rayPos[i]) / rayDir[i];
 		}
 		else if (rayDir[i] < 0) {
-			tVals[i] = (boxMax[i] - rayPos[i]) / rayDir[i];
+			//if(boxMax[i] > rayPos[i])
+				//tVals[i] = (boxMin[i] - rayPos[i]) / rayDir[i];
+			//else
+			tVals[i] = ((isInside ? boxMin[i] : boxMax[i]) - rayPos[i]) / rayDir[i];
 		}
 	}
-	float bestT = tVals.GetMaxElement();
+	float bestT = isInside ? tVals.GetMinElement() : tVals.GetMaxElement();
+
+
 	if (bestT < 0.0f) {
-		//return false; // no backwards rays
+		return false; // no backwards rays
 	}
 
 	Vector3 intersection = rayPos + (rayDir * bestT);
@@ -150,26 +173,26 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 	VolumeType pairType = (VolumeType)((int)volA->type | (int)volB->type);
 
 	if (pairType == VolumeType::AABB) {
-		return AABBIntersection((AABBVolume&)* volA, transformA,
-			(AABBVolume&)* volB, transformB, collisionInfo);
+		return AABBIntersection((AABBVolume&)*volA, transformA,
+			(AABBVolume&)*volB, transformB, collisionInfo);
 	}
 
 	if (pairType == VolumeType::Sphere) {
-		return SphereIntersection((SphereVolume&)* volA, transformA,
-			(SphereVolume&)* volB, transformB, collisionInfo);
+		return SphereIntersection((SphereVolume&)*volA, transformA,
+			(SphereVolume&)*volB, transformB, collisionInfo);
 	}
 
 	if (volA->type == VolumeType::AABB &&
 		volB->type == VolumeType::Sphere) {
-		return AABBSphereIntersection((AABBVolume&)* volA, transformA,
-			(SphereVolume&)* volB, transformB, collisionInfo);
+		return AABBSphereIntersection((AABBVolume&)*volA, transformA,
+			(SphereVolume&)*volB, transformB, collisionInfo);
 	}
 	if (volA->type == VolumeType::Sphere &&
 		volB->type == VolumeType::AABB) {
 		collisionInfo.a = b;
 		collisionInfo.b = a;
-		return AABBSphereIntersection((AABBVolume&)* volB, transformB,
-			(SphereVolume&)* volA, transformA, collisionInfo);
+		return AABBSphereIntersection((AABBVolume&)*volB, transformB,
+			(SphereVolume&)*volA, transformA, collisionInfo);
 	}
 
 	return false;

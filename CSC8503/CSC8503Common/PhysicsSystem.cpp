@@ -115,7 +115,8 @@ void PhysicsSystem::Update(float dt) {
 void NCL::CSC8503::PhysicsSystem::InitQuadTree()
 {
 	quadTree = new QuadTree<GameObject*>(Vector2(worldSize.x + 1, worldSize.z + 1), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 3);
-	staticQuadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 3);
+	staticQuadTree = new QuadTree<GameObject*>(Vector2(worldSize.x, worldSize.z), (int)(log2((worldSize.x + worldSize.z) / 2.0f)), 9);
+	UpdateObjectAABBs();
 
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
@@ -320,10 +321,12 @@ void PhysicsSystem::BroadPhase() {
 	//	Vector3 pos = (*i)->GetConstTransform().GetWorldPosition();
 	//	tree.Insert(*i, pos, halfSizes);
 	//}
+	int dymCount = 0;
 	quadTree->OperateOnContents([&](std::list<QuadTreeEntry<GameObject*>>& data) {
 		CollisionDetection::CollisionInfo info;
 
 		for (auto i = data.begin(); i != data.end(); ++i) {
+			dymCount++;
 			for (auto j = std::next(i); j != data.end(); ++j) {
 				// is this pair of items already in the collision set -
 				// if the same pair is in another quadtree node together etc
@@ -344,8 +347,8 @@ void PhysicsSystem::BroadPhase() {
 		}
 	});
 
-	quadTree->DebugDraw(Vector4(0.9f,0.2f,0.5f,1));
-	staticQuadTree->DebugDraw(Vector4(0.7f, 0.5f, 0.2f, 1));
+	//quadTree->DebugDraw(Vector4(0.9f,0.2f,0.5f,1));
+	//staticQuadTree->DebugDraw(Vector4(0.7f, 0.5f, 0.2f, 1));
 }
 
 /*

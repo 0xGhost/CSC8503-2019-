@@ -72,6 +72,17 @@ namespace NCL {
 				return v;
 			}
 
+			constexpr float		GetMinElement() const {
+				float v = x;
+				if (y < v) {
+					v = y;
+				}
+				if (z < v) {
+					v = z;
+				}
+				return v;
+			}
+
 			float		GetAbsMaxElement() const {
 				float v = abs(x);
 				if (abs(y) > v) {

@@ -539,6 +539,7 @@ void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
 #if 1
+	GameObject::ResetID();
 	physics->SetLayerCollision(2, 2, false);
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
 	lightPos = Vector3(-200.0f, 160.0f, -200.0f);

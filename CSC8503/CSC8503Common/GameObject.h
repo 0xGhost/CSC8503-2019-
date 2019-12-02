@@ -54,6 +54,7 @@ namespace NCL {
 			void SetLayer(unsigned int l) { layer = l; } // layer range: 0 ~ 31
 
 			unsigned long long GetID() { return id; }
+			static void ResetID() { nextId = 0; }
 
 			bool GetBroadphaseAABB(Vector3& outsize) const;
 

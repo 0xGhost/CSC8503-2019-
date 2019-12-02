@@ -8,6 +8,7 @@
 namespace NCL {
 	using namespace NCL::Maths;
 	namespace CSC8503 {
+
 		template<class T>
 		class QuadTree;
 
@@ -59,7 +60,7 @@ namespace NCL {
 					}
 				}
 				else { // currently a leaf node , can just expand
-					contents.push_back(QuadTreeEntry <T >(object, objectPos, objectSize));
+					contents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
 					if ((int)contents.size() > maxSize && depthLeft > 0) {
 						if (!children) {
 							Split();
@@ -117,7 +118,7 @@ namespace NCL {
 			void RayCastList(Ray& r, std::list<T>& list)
 			{
 				RayCollision c;
-				if (CollisionDetection::RayBoxIntersection(r, Vector3(position.x, 0, position.y), Vector3(size.x, 100, size.y), c))
+				if (CollisionDetection::RayBoxIntersection(r, Vector3(position.x, 0, position.y), Vector3(size.x, 1000, size.y), c, true))
 				{
 					if (children) {
 						for (int i = 0; i < 4; ++i) {
