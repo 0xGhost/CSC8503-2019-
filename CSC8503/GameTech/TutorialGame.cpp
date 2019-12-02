@@ -431,7 +431,9 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(10, 80), Vector4(0.2, 0.2, 0.2, 0.9));
 		Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
-	TileType type = (TileType)mapTiles[IndexOf(pos.x / 10 + mapSize.x / 2, pos.z / 10 + mapSize.y / 2)];
+	int x = (int)((pos.x - TILESIZE) / 10 + mapSize.x / 2);
+	int y = (int)((pos.z - TILESIZE) / 10 + mapSize.y / 2);
+	TileType type = (TileType)mapTiles[IndexOf(x, y)];
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::N)))
 	{
 		type = TileType::LowGround;
@@ -460,8 +462,8 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	{
 		type = TileType::Apple;
 	}
-	if (type == mapTiles[IndexOf((int)pos.x / 10 + (int)mapSize.x / 2, (int)pos.z / 10 + (int)mapSize.y / 2)]) return;
-	mapTiles[IndexOf((int)pos.x / 10 + (int)mapSize.x / 2, (int)pos.z / 10 + (int)mapSize.y / 2)] = type;
+	if (type == mapTiles[IndexOf(x, y)]) return;
+	mapTiles[IndexOf(x, y)] = type;
 	InitWorld();
 	selectionObject = nullptr;
 	

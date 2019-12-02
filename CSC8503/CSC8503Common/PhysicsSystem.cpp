@@ -307,7 +307,7 @@ void PhysicsSystem::BroadPhase() {
 			}
 		}
 	});
-	quadTree->DebugDraw();
+	//quadTree->DebugDraw();
 }
 
 /*
