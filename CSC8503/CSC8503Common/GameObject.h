@@ -42,6 +42,8 @@ namespace NCL {
 			void SetActive(bool a) { isActive = a; }
 			void SetStatic(bool s) { isStatic = s; }
 
+			virtual void Update(float dt){}
+
 			virtual void OnCollisionBegin(GameObject* otherObject) {
 				//std::cout << "OnCollisionBegin event occured!\n";
 			}

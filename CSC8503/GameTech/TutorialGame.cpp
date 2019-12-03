@@ -123,6 +123,8 @@ TutorialGame::~TutorialGame() {
 }
 
 void TutorialGame::UpdateGame(float dt) {
+	//TODO: menu
+
 	this->dt = dt;
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
