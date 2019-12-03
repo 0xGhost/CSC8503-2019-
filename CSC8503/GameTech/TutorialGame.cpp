@@ -544,14 +544,17 @@ void TutorialGame::InitWorld() {
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
 	lightPos = Vector3(-200.0f, 160.0f, -200.0f);
 	renderer->SetLightPosition(lightPos);
-	renderer->SetShadowProjMatrix(Matrix4::Perspective(200, 500, 1, 60));
+	renderer->SetShadowProjMatrix(Matrix4::Orthographic(200, 600, 500, -500, 500, -300));//Matrix4::Perspective(200, 500, 1, 60));
+	vector<int> mapTemp = mapTiles;
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for(int z = 0; z < mapSize.y; z++)
 		{
+			mapTemp[IndexOf(x, z)] &= (TileType::LowGround | TileType::HighGround);
 			AddTileToWorld(x, z);
 		}
 	}
+
 
 	physics->InitQuadTree();
 #else
