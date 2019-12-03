@@ -239,7 +239,9 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	Transform& transformB = b.GetTransform();
 
 	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
-
+	if (totalMass == 0.0f) {
+		return;
+	}
 	// Separate them out using projection
 	transformA.SetWorldPosition(transformA.GetWorldPosition() -
 		(p.normal * p.penetration * (physA->GetInverseMass() / totalMass)));
@@ -260,6 +262,10 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 
 
 	Vector3 contactVelocity = fullVelocityB - fullVelocityA;
+
+	if (Vector3::Dot(contactVelocity, p.normal) > 0) {
+		return;
+	}
 
 	float impulseForce = Vector3::Dot(contactVelocity, p.normal);
 

@@ -58,7 +58,7 @@ void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (inva
 			mapTiles.push_back(type);
 		}
 	}
-	
+
 	fileInput.close();
 }
 
@@ -140,12 +140,12 @@ void TutorialGame::UpdateGame(float dt) {
 		Debug::Print("(G)ravity off", Vector2(10, 40));
 	}
 	Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
-							" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
-							" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
-		Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f,0.1f,0.1f,1));
+		" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
+		" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
+		Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
 	Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
-							" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
-		Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f,0.1f,0.1f,1));
+		" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
+		Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 	//Debug::Print("camera" + world->GetMainCamera()->GetPosition());
 	Debug::DrawLine(Vector3(), lightPos, Vector4(0.7, 0, 0, 1));
 
@@ -154,7 +154,7 @@ void TutorialGame::UpdateGame(float dt) {
 	if (isEditMode)
 		EditSelectedObject();
 	else
-	MoveSelectedObject();
+		MoveSelectedObject();
 
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
@@ -181,9 +181,9 @@ void TutorialGame::UpdateKeys() {
 		try
 		{
 			SaveMapData(fileName);
-			std::cout << "Solution file write successful." << endl;
+			std::cout << "Map save successful." << endl;
 		}
-		catch (const invalid_argument & iae)
+		catch (const invalid_argument& iae)
 		{
 			std::cout << "Unable to write data : " << iae.what() << "\n";
 		}
@@ -196,20 +196,22 @@ void TutorialGame::UpdateKeys() {
 		try
 		{
 			LoadMapData(fileName);
-			std::cout << "Solution file read successful. Press F1 to use new map" << endl;
+			InitWorld();
+			selectionObject = nullptr;
+			std::cout << "Map load successful. Press F1 to use new map" << endl;
 		}
-		catch (const invalid_argument & iae)
+		catch (const invalid_argument& iae)
 		{
 			std::cout << "Unable to read data : " << iae.what() << "\n";
 		}
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) { // edit mode
-		if (isEditMode) {
-			isEditMode = false; 
-			return;
-		}
+		isEditMode = isEditMode ? false : true;
+	}
 
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) // create new map
+	{
 		cout << "Enter map size(two integer): ";
 		cin >> mapSize.x >> mapSize.y;
 		mapTiles.resize(mapSize.x * mapSize.y);
@@ -260,21 +262,21 @@ void TutorialGame::LockedObjectMovement() {
 	//the right axis, to hopefully get a vector that's good enough!
 
 	Vector3 fwdAxis = Vector3::Cross(Vector3(0, 1, 0), rightAxis);
-
+	float f = 100;
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
-		selectionObject->GetPhysicsObject()->AddForce(-rightAxis);
+		selectionObject->GetPhysicsObject()->AddForce(-rightAxis * f);
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::RIGHT)) {
-		selectionObject->GetPhysicsObject()->AddForce(rightAxis);
+		selectionObject->GetPhysicsObject()->AddForce(rightAxis * f);
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::UP)) {
-		selectionObject->GetPhysicsObject()->AddForce(fwdAxis);
+		selectionObject->GetPhysicsObject()->AddForce(fwdAxis * f);
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
-		selectionObject->GetPhysicsObject()->AddForce(-fwdAxis);
+		selectionObject->GetPhysicsObject()->AddForce(-fwdAxis * f);
 	}
 }
 
@@ -345,16 +347,19 @@ letting you move the camera around.
 */
 bool TutorialGame::SelectObject() {
 
-	if(selectionObject)
-	Debug::Print("ID:" + std::to_string(selectionObject->GetID()) + " name:" + selectionObject->GetName() +
-		" pos:" + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().x) +
-		" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().y) +
-		" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().z) + 
-		" rot:" + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().x) +
-		" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().y) +
-		" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().z)
-		, Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
-	
+	if (selectionObject) {
+		Debug::Print("ID:" + std::to_string(selectionObject->GetID()) + " name:" + selectionObject->GetName(),
+			Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+		Debug::Print(" pos:" + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().x) +
+			" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().y) +
+			" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().z) +
+			" rot:" + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().x) +
+			" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().y) +
+			" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().z)
+			, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+	}
+
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
 		inSelectionMode = !inSelectionMode;
 		if (inSelectionMode) {
@@ -383,7 +388,7 @@ bool TutorialGame::SelectObject() {
 				selectionColor = selectionObject->GetRenderObject()->GetColour();
 				selectionObject->GetRenderObject()->SetColour(Vector4(1, 0.2f, 0.2f, 1));
 
-				
+
 
 #if 0	// Futher Work 1-2
 				Debug::DrawLine(selectionObject->GetTransform().GetWorldPosition(), (closestCollision.collidedAt - selectionObject->GetTransform().GetWorldPosition()) * 500 + selectionObject->GetTransform().GetWorldPosition());
@@ -431,7 +436,7 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 		return;// we haven ’t selected anything !
 	}
 	Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(10, 80), Vector4(0.2, 0.2, 0.2, 0.9));
-		Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
+	Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
 	int x = (int)((pos.x - TILESIZE) / 10 + mapSize.x / 2);
 	int y = (int)((pos.z - TILESIZE) / 10 + mapSize.y / 2);
@@ -468,7 +473,7 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	mapTiles[IndexOf(x, y)] = type;
 	InitWorld();
 	selectionObject = nullptr;
-	
+
 }
 
 /*
@@ -499,6 +504,7 @@ void TutorialGame::MoveSelectedObject() {
 			}
 		}
 	}
+#if 0 // futher work, can be used for debug
 	if (!inSelectionMode) return;
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::W)))
 	{
@@ -524,6 +530,7 @@ void TutorialGame::MoveSelectedObject() {
 	{
 		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -1, 0) * forceMagnitude * dt);
 	}
+#endif
 }
 
 void TutorialGame::InitCamera() {
@@ -544,11 +551,24 @@ void TutorialGame::InitWorld() {
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
 	lightPos = Vector3(-200.0f, 160.0f, -200.0f);
 	renderer->SetLightPosition(lightPos);
-	renderer->SetShadowProjMatrix(Matrix4::Orthographic(200, 600, 500, -500, 500, -300));//Matrix4::Perspective(200, 500, 1, 60));
+	
+
+#pragma region ShadowProjMat
+
+	Vector2 lightv2 = Vector2(-lightPos.x, -lightPos.z);
+
+	float d = sqrt(mapSize.x * mapSize.x * 100 + mapSize.y * mapSize.y * 100) / 2;
+	float topdownD = abs(lightPos.y / lightPos.Length() * (d + abs(lightv2.Length() / lightPos.y * (TILESIZE + HIGHGROUNDY) * 2)));
+	float nearfarD = lightPos.y / lightPos.Length() * d;
+
+	renderer->SetShadowProjMatrix(Matrix4::Orthographic(lightPos.Length() - nearfarD*2, lightPos.Length() + nearfarD*2, d + 1, -d - 1, topdownD, -topdownD));
+	//renderer->SetShadowProjMatrix(Matrix4::Perspective(20, 500, 1, 70));
+#pragma endregion
+
 	vector<int> mapTemp = mapTiles;
 	for (int x = 0; x < mapSize.x; x++)
 	{
-		for(int z = 0; z < mapSize.y; z++)
+		for (int z = 0; z < mapSize.y; z++)
 		{
 			mapTemp[IndexOf(x, z)] &= (TileType::LowGround | TileType::HighGround);
 			AddTileToWorld(x, z);
@@ -653,7 +673,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	{
 		onTile = AddCharacterToWorld(position + Vector3(0, 10 + y, 0));
 	}
-	GameObject *cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
+	GameObject* cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
 	cube->SetLayer(2);
 	cube->SetStatic(true);
 }

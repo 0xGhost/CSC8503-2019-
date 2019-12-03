@@ -2,7 +2,7 @@
 #include "GameTechRenderer.h"
 #include "../CSC8503Common/PhysicsSystem.h"
 const int TILESIZE = 5;
-const float WATERY = -0.5f;
+const float WATERY = -0.2f;
 const float HIGHGROUNDY = 4;// -WATERY;
 
 
@@ -128,7 +128,7 @@ namespace NCL {
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
-			Vector3 lockedOffset		= Vector3(0, 14, 20);
+			Vector3 lockedOffset = Vector3(0, 100, -20);//Vector3(0, 14, 20);
 			void LockCameraToObject(GameObject* o) {
 				lockedObject = o;
 			}

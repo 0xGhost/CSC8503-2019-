@@ -9,7 +9,7 @@ using namespace NCL;
 using namespace NCL::CSC8503;
 
 GameWorld::GameWorld()	{
-	mainCamera = new Camera();
+	mainCamera = new Camera(-95, 180, Vector3(0,150,0));
 	
 	quadTree = nullptr;
 
