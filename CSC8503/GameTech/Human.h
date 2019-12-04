@@ -1,5 +1,8 @@
 #pragma once
 #include "..\CSC8503Common\GameObject.h"
+#include "..\CSC8503Common\GameWorld.h"
+
+
 namespace NCL {
 	namespace CSC8503 {
 		class Human :
