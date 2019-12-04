@@ -1,5 +1,5 @@
 #pragma once
-
+#include <functional>
 namespace NCL {
 	namespace CSC8503 {
 		class State		{
@@ -9,7 +9,9 @@ namespace NCL {
 			virtual void Update() = 0; //Pure virtual base class
 		};
 
-		typedef void(*StateFunc)(void*);
+		//typedef void(*StateFunc)(void*);
+
+		typedef std::function<void(void*)> StateFunc;
 
 		class GenericState : public State		{
 		public:

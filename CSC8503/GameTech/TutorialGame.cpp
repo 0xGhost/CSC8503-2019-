@@ -6,6 +6,7 @@
 #include "../../Common/TextureLoader.h"
 #include <fstream>
 #include <stdexcept>
+#include "Watcher.h"
 
 #include "../CSC8503Common/PositionConstraint.h"
 
@@ -125,6 +126,8 @@ TutorialGame::~TutorialGame() {
 void TutorialGame::UpdateGame(float dt) {
 	//TODO: menu
 
+	
+
 	this->dt = dt;
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
@@ -223,6 +226,11 @@ void TutorialGame::UpdateKeys() {
 		isEditMode = true;
 	}
 
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7))
+	{
+		isPlaying = isPlaying ? false : true;
+	}
+
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
 		useGravity = !useGravity; //Toggle gravity!
 		physics->UseGravity(useGravity);
@@ -265,20 +273,25 @@ void TutorialGame::LockedObjectMovement() {
 
 	Vector3 fwdAxis = Vector3::Cross(Vector3(0, 1, 0), rightAxis);
 	float f = 100;
+	Vector3 front = -selectionObject->GetTransform().GetForward() * 0.1;
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
-		selectionObject->GetPhysicsObject()->AddForce(-rightAxis * f);
+		//selectionObject->GetPhysicsObject()->AddForce(-rightAxis * f);
+		selectionObject->GetPhysicsObject()->AddForceAtLocalPosition(-rightAxis * f, front);
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::RIGHT)) {
-		selectionObject->GetPhysicsObject()->AddForce(rightAxis * f);
+		//selectionObject->GetPhysicsObject()->AddForce(rightAxis * f);
+		selectionObject->GetPhysicsObject()->AddForceAtLocalPosition(rightAxis * f, front);
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::UP)) {
-		selectionObject->GetPhysicsObject()->AddForce(fwdAxis * f);
+		//selectionObject->GetPhysicsObject()->AddForce(fwdAxis * f);
+		selectionObject->GetPhysicsObject()->AddForceAtLocalPosition(fwdAxis * f, front);
 	}
 
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
-		selectionObject->GetPhysicsObject()->AddForce(-fwdAxis * f);
+		//selectionObject->GetPhysicsObject()->AddForce(-fwdAxis * f);
+		selectionObject->GetPhysicsObject()->AddForceAtLocalPosition(-fwdAxis * f, front);
 	}
 }
 
@@ -457,7 +470,7 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::K)))
 	{
-		type = TileType::Keeper;
+		type = TileType::Chaser;
 	}
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::J)))
 	{
@@ -502,7 +515,6 @@ void TutorialGame::MoveSelectedObject() {
 		if (physics->Raycast(ray, closestCollision, true)) {
 			if (closestCollision.node == selectionObject) {
 				selectionObject->GetPhysicsObject()->AddForceAtPosition(ray.GetDirection() * forceMagnitude, closestCollision.collidedAt);
-
 			}
 		}
 	}
@@ -547,7 +559,7 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
-#if 1
+#if 1 // coursework
 	GameObject::ResetID();
 	physics->SetLayerCollision(2, 2, false);
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
@@ -572,12 +584,13 @@ void TutorialGame::InitWorld() {
 	{
 		for (int z = 0; z < mapSize.y; z++)
 		{
-			mapTemp[IndexOf(x, z)] &= (TileType::LowGround | TileType::HighGround);
+			//mapTemp[IndexOf(x, z)] &= (TileType::LowGround | TileType::HighGround);
+			// TODO: cube expand
 			AddTileToWorld(x, z);
 		}
 	}
 
-
+	Human::SetPlayerIterator(players.begin(), players.end());
 	physics->InitQuadTree();
 #else
 	InitMixedGridWorld(10, 10, 6.0f, 6.0f);
@@ -667,13 +680,13 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	{
 		onTile = AddGooseToWorld(position + Vector3(0, 8 + y, 0));
 	}
-	if (mapTiles[IndexOf(x, z)] == TileType::Keeper)
+	if (mapTiles[IndexOf(x, z)] == TileType::Chaser)
 	{
-		onTile = AddParkKeeperToWorld(position + Vector3(0, 10 + y, 0));
+		onTile = AddChaserToWorld(position + Vector3(0, 10 + y, 0));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Watcher)
 	{
-		onTile = AddCharacterToWorld(position + Vector3(0, 10 + y, 0));
+		onTile = AddWatcherToWorld(position + Vector3(0, 10 + y, 0));
 	}
 	GameObject* cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
 	cube->SetLayer(2);
@@ -724,7 +737,21 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	goose->GetPhysicsObject()->SetInverseMass(inverseMass);
 	goose->GetPhysicsObject()->InitSphereInertia();
 
+	goose->SetUpdateFunc([](float dt, GameObject* g) {
+		//g->GetTransform().SetLocalOrientation(Quaternion(g->GetPhysicsObject()->GetLinearVelocity(), 3.14));
+		Vector3 force = g->GetTransform().GetUp().Normalised() - Vector3(0, 1, 0);
+		Vector3 torque = Vector3::Cross(Vector3(0, 1, 0), force);
+		//g->GetPhysicsObject()->AddForceAtLocalPosition(-torque * 100, Vector3(0,1,0));
+		//g->GetPhysicsObject()->AddForceAtLocalPosition(torque * 100, Vector3(0, -1, 0));
+		Debug::DrawLine(g->GetTransform().GetWorldPosition(), g->GetTransform().GetUp(), 10);
+		g->GetPhysicsObject()->AddTorque(-torque * 200);
+		//g->GetPhysicsObject()->AddForceAtLocalPosition(Vector3(0, 5, 0), Vector3(0, 10, 0));
+		//g->GetPhysicsObject()->AddForceAtLocalPosition(Vector3(0, -10, 0), Vector3(0, -10, 0));
+	});
+
 	world->AddGameObject(goose);
+
+	players.push_back(goose);
 
 	return goose;
 }
@@ -753,7 +780,7 @@ GameObject* TutorialGame::AddParkKeeperToWorld(const Vector3& position)
 	return keeper;
 }
 
-GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position) {
+GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int r) {
 	float meshSize = 4.0f;
 	float inverseMass = 0.5f;
 
@@ -767,10 +794,7 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position) {
 		minVal.y = min(minVal.y, i.y);
 	}
 
-	GameObject* character = new GameObject("Character");
-
-	float r = rand() / (float)RAND_MAX;
-
+	GameObject* character = new GameObject(r > 0.5f ? "Chaser" : "Watcher");
 
 	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
 	character->SetBoundingVolume((CollisionVolume*)volume);
@@ -787,6 +811,54 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position) {
 	world->AddGameObject(character);
 
 	return character;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddWatcherToWorld(const Vector3& position)
+{
+	GameObject* watcher = AddCharacterToWorld(position, 0);
+
+#pragma region StateMachine
+	StateMachine* watcherMachine = new StateMachine();
+
+	StateFunc idleFunc = [&](void* data)
+	{
+		//Vector3 watcherPos = ((GameObject*)data)->GetTransform().GetWorldPosition();
+		//Vector3 playerPos = lockedObject->GetTransform().GetWorldPosition();
+		((GameObject*)data)->GetPhysicsObject()->AddTorque(Vector3(0, 10, 0));
+	};
+
+	StateFunc attackFunc = [&](void* data)
+	{
+		Vector3 watcherPos = ((GameObject*)data)->GetTransform().GetWorldPosition();
+		Vector3 playerPos = lockedObject->GetTransform().GetWorldPosition();
+		float distance = (watcherPos - playerPos).Length();
+		playerPos = playerPos + lockedObject->GetPhysicsObject()->GetLinearVelocity() * distance / 10;
+		Debug::DrawLine(watcherPos, playerPos);
+		// TODO: throw a ball
+	};
+
+	GenericState* idleState = new GenericState(idleFunc, (void*)&watcher);
+	GenericState* attackState = new GenericState(attackFunc, (void*)&watcher);
+
+	watcherMachine->AddState(idleState);
+	watcherMachine->AddState(attackState);
+
+	 
+
+
+	//watcherMachine->set
+
+
+	watcher->SetStateMachine(watcherMachine);
+#pragma endregion
+
+	return watcher;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddChaserToWorld(const Vector3& position)
+{
+	GameObject* chaser = AddCharacterToWorld(position, 1);
+	return chaser;
 }
 
 GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {

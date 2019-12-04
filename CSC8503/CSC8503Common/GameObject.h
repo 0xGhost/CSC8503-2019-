@@ -5,15 +5,19 @@
 #include "PhysicsObject.h"
 #include "RenderObject.h"
 #include "NetworkObject.h"
+#include "StateMachine.h"
+#include "State.h"
 
 #include <vector>
+#include <functional>
 
 using std::vector;
 
 namespace NCL {
 	namespace CSC8503 {
 		class NetworkObject;
-
+		class GameObject;
+		typedef std::function<void(float dt, GameObject* g)> UpdateFunc;
 		class GameObject {
 		public:
 			GameObject(string name = "", string tag = "");
@@ -42,7 +46,7 @@ namespace NCL {
 			void SetActive(bool a) { isActive = a; }
 			void SetStatic(bool s) { isStatic = s; }
 
-			virtual void Update(float dt){}
+			virtual void Update(float dt) { updateFunc(dt, this); if(stateMachine) stateMachine->Update(); }
 
 			virtual void OnCollisionBegin(GameObject* otherObject) {
 				//std::cout << "OnCollisionBegin event occured!\n";
@@ -57,6 +61,10 @@ namespace NCL {
 
 			unsigned long long GetID() { return id; }
 			static void ResetID() { nextId = 0; }
+
+			void SetUpdateFunc(UpdateFunc func) { updateFunc = func; }
+			void SetStateMachine(StateMachine* s) { stateMachine = s; }
+			StateMachine* GetStateMachine() const { return stateMachine; }
 
 			bool GetBroadphaseAABB(Vector3& outsize) const;
 
@@ -77,7 +85,8 @@ namespace NCL {
 			unsigned long long id;
 			static unsigned long long nextId;
 			unsigned int layer;
-
+			UpdateFunc updateFunc;
+			StateMachine *stateMachine;
 			Vector3 broadphaseAABB;
 		};
 	}

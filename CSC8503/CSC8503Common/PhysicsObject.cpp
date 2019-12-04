@@ -32,11 +32,16 @@ void PhysicsObject::AddForce(const Vector3& addedForce) {
 	force += addedForce;
 }
 
+void PhysicsObject::AddForceAtLocalPosition(const Vector3& addedForce, const Vector3& position) {
+	force += addedForce;
+	torque += Vector3::Cross(position, addedForce);
+}
+
 void PhysicsObject::AddForceAtPosition(const Vector3& addedForce, const Vector3& position) {
 	Vector3 localPos = position - transform->GetWorldPosition();
-
-	force  += addedForce;
-	torque += Vector3::Cross(localPos, addedForce);
+	AddForceAtLocalPosition(addedForce, localPos);
+	//force  += addedForce;
+	//torque += Vector3::Cross(localPos, addedForce);
 }
 
 void PhysicsObject::AddTorque(const Vector3& addedTorque) {

@@ -10,13 +10,16 @@ const float HIGHGROUNDY = 4;// -WATERY;
 
 namespace NCL {
 	namespace CSC8503 {
+
+
+
 		enum TileType
 		{
 			
 			LowGround = 1, // 1 << 0
 
-			//Keeper = 2, // 1 << 1 
-			Keeper = 3, // 1 << 0 & 1 << 1 
+			//Chaser = 2, // 1 << 1 
+			Chaser = 3, // 1 << 0 & 1 << 1 
 
 			HighGround = 4, // 1 << 2
 
@@ -78,9 +81,10 @@ namespace NCL {
 			//IT'S HAPPENING
 			GameObject* AddGooseToWorld(const Vector3& position);
 			GameObject* AddParkKeeperToWorld(const Vector3& position);
-			GameObject* AddCharacterToWorld(const Vector3& position);
+			GameObject* AddCharacterToWorld(const Vector3& position, const int r = 0);
+			GameObject* AddWatcherToWorld(const Vector3& position);
+			GameObject* AddChaserToWorld(const Vector3& position);
 			GameObject* AddAppleToWorld(const Vector3& position);
-
 
 			GameTechRenderer*	renderer;
 			PhysicsSystem*		physics;
@@ -89,6 +93,7 @@ namespace NCL {
 			bool useGravity;
 			bool inSelectionMode;
 			bool isEditMode;
+			bool isPlaying;
 
 			float		forceMagnitude;
 
@@ -125,6 +130,8 @@ namespace NCL {
 
 			};
 			Vector3 lightPos;
+
+			vector<GameObject*> players;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

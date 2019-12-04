@@ -14,6 +14,8 @@ GameObject::GameObject(string objectName, string objTag)	{
 	physicsObject	= nullptr;
 	renderObject	= nullptr;
 	networkObject	= nullptr;
+	stateMachine = nullptr;
+	updateFunc = std::function<void(float, GameObject*)>([](float, GameObject*) {});
 }
 
 GameObject::~GameObject()	{
