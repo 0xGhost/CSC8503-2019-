@@ -6,7 +6,7 @@
 #include "../../Common/TextureLoader.h"
 #include <fstream>
 #include <stdexcept>
-#include "Watcher.h"
+#include "WatcherObject.h"
 
 #include "../CSC8503Common/PositionConstraint.h"
 
@@ -589,8 +589,9 @@ void TutorialGame::InitWorld() {
 			AddTileToWorld(x, z);
 		}
 	}
-
-	Human::SetPlayerIterator(players.begin(), players.end());
+	
+	HumanObject::SetPhysics(physics);
+	HumanObject::SetPlayerIterator(players.begin(), players.end());
 	physics->InitQuadTree();
 #else
 	InitMixedGridWorld(10, 10, 6.0f, 6.0f);
@@ -793,8 +794,8 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int
 		maxVal.y = max(maxVal.y, i.y);
 		minVal.y = min(minVal.y, i.y);
 	}
-
-	GameObject* character = new GameObject(r > 0.5f ? "Chaser" : "Watcher");
+	
+	GameObject* character = r > 0.5f ? new GameObject("Chaser") : new WatcherObject("Watcher");//new GameObject(r > 0.5f ? "Chaser" : "Watcher");
 
 	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
 	character->SetBoundingVolume((CollisionVolume*)volume);
@@ -815,42 +816,20 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int
 
 GameObject* NCL::CSC8503::TutorialGame::AddWatcherToWorld(const Vector3& position)
 {
-	GameObject* watcher = AddCharacterToWorld(position, 0);
-
-#pragma region StateMachine
-	StateMachine* watcherMachine = new StateMachine();
-
-	StateFunc idleFunc = [&](void* data)
-	{
-		//Vector3 watcherPos = ((GameObject*)data)->GetTransform().GetWorldPosition();
-		//Vector3 playerPos = lockedObject->GetTransform().GetWorldPosition();
-		((GameObject*)data)->GetPhysicsObject()->AddTorque(Vector3(0, 10, 0));
-	};
-
-	StateFunc attackFunc = [&](void* data)
-	{
-		Vector3 watcherPos = ((GameObject*)data)->GetTransform().GetWorldPosition();
-		Vector3 playerPos = lockedObject->GetTransform().GetWorldPosition();
-		float distance = (watcherPos - playerPos).Length();
-		playerPos = playerPos + lockedObject->GetPhysicsObject()->GetLinearVelocity() * distance / 10;
-		Debug::DrawLine(watcherPos, playerPos);
-		// TODO: throw a ball
-	};
-
-	GenericState* idleState = new GenericState(idleFunc, (void*)&watcher);
-	GenericState* attackState = new GenericState(attackFunc, (void*)&watcher);
-
-	watcherMachine->AddState(idleState);
-	watcherMachine->AddState(attackState);
-
-	 
-
-
-	//watcherMachine->set
-
-
-	watcher->SetStateMachine(watcherMachine);
-#pragma endregion
+	WatcherObject* watcher = (WatcherObject*)AddCharacterToWorld(position, 0);
+	watcher->SetWatcherFunc([&](Vector3 direction, GameObject* g) {
+		GameObject* ball = AddSphereToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f, 1.0f, 1.0f / 2.0f);
+		ball->GetPhysicsObject()->AddForce(direction * 1000);// ->AddForce(-direction * 5000);
+		ball->GetPhysicsObject()->SetFriction(0.2f);
+		ball->GetPhysicsObject()->SetElasticity(0.6f);
+		ball->SetUpdateFunc([&](float dt, GameObject* g) {
+			//g->objTime += dt;
+			if (g->objTime > 10)
+				world->RemoveGameObject(g);
+			
+		});
+		world->AddGameObject(ball);
+	});
 
 	return watcher;
 }

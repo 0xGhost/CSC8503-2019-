@@ -30,10 +30,10 @@
     <ClCompile Include="NetworkPlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Watcher.cpp">
+    <ClCompile Include="WatcherObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Human.cpp">
+    <ClCompile Include="HumanObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,10 +50,10 @@
     <ClInclude Include="NetworkPlayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Watcher.h">
+    <ClInclude Include="WatcherObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Human.h">
+    <ClInclude Include="HumanObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

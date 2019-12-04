@@ -1,7 +1,8 @@
 #pragma once
-#include "Human.h"
+#include "HumanObject.h"
 namespace NCL {
 	namespace CSC8503 {
+		typedef std::function<void(Vector3, GameObject*)> WatcherFunc;
 		class WatcherObject :
 			public HumanObject
 		{
@@ -12,11 +13,16 @@ namespace NCL {
 
 			void SetAttackDistance(float d) { attackDistance = d; }
 			void SetDetectedDistance(float d) { detectionDistance = d; }
-
+			void SetWatcherFunc(WatcherFunc f) { throwBall = f; }
 		protected:
-			StateMachine *stateMachine;
+			//StateMachine *stateMachine;
 			float attackDistance;
 			float detectionDistance;
+			const float totalCoolDownTime = 2.0f;
+			float coolDownTime;
+			int ready;
+			WatcherFunc throwBall;
+			
 			//GameObject *playerObject;
 		};
 	}

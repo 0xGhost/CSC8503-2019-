@@ -23,6 +23,8 @@ namespace NCL {
 			GameObject(string name = "", string tag = "");
 			~GameObject();
 
+			float objTime;
+			
 			void SetBoundingVolume(CollisionVolume* vol) { boundingVolume = vol; }
 
 			const CollisionVolume* GetBoundingVolume() const { return boundingVolume; }
@@ -46,7 +48,7 @@ namespace NCL {
 			void SetActive(bool a) { isActive = a; }
 			void SetStatic(bool s) { isStatic = s; }
 
-			virtual void Update(float dt) { updateFunc(dt, this); if(stateMachine) stateMachine->Update(); }
+			virtual void Update(float dt) { updateFunc(dt, this); if (stateMachine) stateMachine->Update(); }
 
 			virtual void OnCollisionBegin(GameObject* otherObject) {
 				//std::cout << "OnCollisionBegin event occured!\n";
@@ -77,6 +79,7 @@ namespace NCL {
 			PhysicsObject* physicsObject;
 			RenderObject* renderObject;
 			NetworkObject* networkObject;
+
 
 			bool	isActive;
 			bool	isStatic;

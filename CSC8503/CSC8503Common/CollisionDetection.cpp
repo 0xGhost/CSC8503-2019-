@@ -40,7 +40,6 @@ bool CollisionDetection::RayBoxIntersection(const Ray& r, const Vector3& boxPos,
 	Vector3 boxMin = boxPos - boxSize;
 	Vector3 boxMax = boxPos + boxSize;
 
-
 	Vector3 rayPos = r.GetPosition();
 	Vector3 rayDir = r.GetDirection();
 

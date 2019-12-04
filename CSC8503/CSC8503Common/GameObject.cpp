@@ -10,6 +10,7 @@ GameObject::GameObject(string objectName, string objTag)	{
 	isStatic		= false;
 	layer			= 1;
 	id				= nextId++;
+	objTime = 0;
 	boundingVolume	= nullptr;
 	physicsObject	= nullptr;
 	renderObject	= nullptr;

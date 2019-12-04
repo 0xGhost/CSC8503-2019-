@@ -431,14 +431,16 @@ void PhysicsSystem::IntegrateVelocity(float dt) {
 	GameObjectIterator first;
 	GameObjectIterator last;
 	gameWorld.GetObjectIterators(first, last);
-	float dampingFactor = 1.0f - 0.95f;
-	float frameDamping = powf(dampingFactor, dt);
+	//float dampingFactor = 1.0f - 0.95f;
+	//float frameDamping = powf(dampingFactor, dt);
 
 	for (auto i = first; i != last; ++i) {
 		PhysicsObject* object = (*i)->GetPhysicsObject();
 		if (object == nullptr) {
 			continue;
 		}
+		float frameDamping = powf(1.0f - object->GetFriction(), dt);
+
 		Transform& transform = (*i)->GetTransform();
 		// Position Stuff
 		Vector3 position = transform.GetLocalPosition();

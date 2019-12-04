@@ -39,6 +39,10 @@ namespace NCL {
 				return inverseMass;
 			}
 
+			float GetFriction() const {
+				return friction;
+			}
+
 			float GetElasticity() const {
 				return elasticity;
 			}
@@ -66,6 +70,10 @@ namespace NCL {
 
 			void SetElasticity(const float& e) {
 				elasticity = e;
+			}
+
+			void SetFriction(const float& f) {
+				friction = f;
 			}
 
 			void InitCubeInertia();
