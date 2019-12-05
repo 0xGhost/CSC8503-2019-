@@ -85,6 +85,8 @@ namespace NCL {
 			GameObject* AddWatcherToWorld(const Vector3& position);
 			GameObject* AddChaserToWorld(const Vector3& position);
 			GameObject* AddAppleToWorld(const Vector3& position);
+			GameObject* AddBallToWorld(const Vector3& position, const Vector3& direction);
+			void RemoveBall(GameObject* o);
 
 			GameTechRenderer*	renderer;
 			PhysicsSystem*		physics;
@@ -132,6 +134,7 @@ namespace NCL {
 			Vector3 lightPos;
 
 			vector<GameObject*> players;
+			vector<GameObject*> freeBalls;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

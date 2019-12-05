@@ -161,12 +161,17 @@ void TutorialGame::UpdateGame(float dt) {
 	else
 		MoveSelectedObject();
 
+
 	world->UpdateWorld(dt);
+	if (selectionObject)
+		std::cout << selectionObject->GetPhysicsObject()->GetLinearVelocity() << " \t";
 	renderer->Update(dt);
 	physics->Update(dt);
+	
 
 	Debug::FlushRenderables();
 	renderer->Render();
+
 }
 
 void TutorialGame::UpdateKeys() {
@@ -373,6 +378,7 @@ bool TutorialGame::SelectObject() {
 			" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().y) +
 			" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().z)
 			, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
@@ -561,7 +567,10 @@ void TutorialGame::InitWorld() {
 	physics->Clear();
 #if 1 // coursework
 	GameObject::ResetID();
-	physics->SetLayerCollision(2, 2, false);
+	physics->SetLayerCollision(2, 2, false); // cube - cube
+	physics->SetLayerCollision(5, 5, false); // freeBall - freeBall
+	physics->SetLayerCollision(5, 2, false); // freeBall - cube
+
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
 	lightPos = Vector3(-200.0f, 160.0f, -200.0f);
 	renderer->SetLightPosition(lightPos);
@@ -818,17 +827,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddWatcherToWorld(const Vector3& positio
 {
 	WatcherObject* watcher = (WatcherObject*)AddCharacterToWorld(position, 0);
 	watcher->SetWatcherFunc([&](Vector3 direction, GameObject* g) {
-		GameObject* ball = AddSphereToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f, 1.0f, 1.0f / 2.0f);
-		ball->GetPhysicsObject()->AddForce(direction * 1000);// ->AddForce(-direction * 5000);
-		ball->GetPhysicsObject()->SetFriction(0.2f);
-		ball->GetPhysicsObject()->SetElasticity(0.6f);
-		ball->SetUpdateFunc([&](float dt, GameObject* g) {
-			//g->objTime += dt;
-			if (g->objTime > 10)
-				world->RemoveGameObject(g);
-			
-		});
-		world->AddGameObject(ball);
+		AddBallToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f, direction);
 	});
 
 	return watcher;
@@ -857,6 +856,41 @@ GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
 	world->AddGameObject(apple);
 
 	return apple;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddBallToWorld(const Vector3& position, const Vector3& direction)
+{
+	GameObject* ball;
+	if (freeBalls.empty())
+	{
+		ball = AddSphereToWorld(position, 1.0f, 1.0f / 2.0f);
+		ball->GetPhysicsObject()->SetFriction(0.2f);
+		ball->GetPhysicsObject()->SetElasticity(0.8f);
+		ball->SetUpdateFunc([&](float dt, GameObject* g) {
+			g->objTime += dt;
+			if (g->objTime > 10)
+				RemoveBall(g);
+
+			});
+	}
+	else
+	{
+		ball = freeBalls.back();
+		freeBalls.pop_back();
+		ball->GetTransform().SetWorldPosition(position);
+		ball->objTime = 0;
+		ball->SetLayer(1);
+	}
+	ball->GetPhysicsObject()->ApplyLinearImpulse(direction * 100);//AddForce(direction * 3000);// ->AddForce(-direction * 5000);
+	return ball;
+}
+
+void NCL::CSC8503::TutorialGame::RemoveBall(GameObject* o)
+{
+	freeBalls.push_back(o);
+
+	//o->GetTransform().SetWorldPosition(Vector3(0,0,0));
+	o->SetLayer(5);
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {

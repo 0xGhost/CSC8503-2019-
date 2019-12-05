@@ -311,7 +311,8 @@ bool CollisionDetection::AABBSphereIntersection(const AABBVolume& volumeA, const
 
 	Vector3 localPoint = delta - closestPointOnBox;
 	float distance = (localPoint).Length();
-
+	if (distance == 0.0f)
+		int  a = 1;
 	if (distance < volumeB.GetRadius()) {// yes , we ’re colliding !
 		collisionInfo.AddContactPoint(
 			closestPointOnBox,

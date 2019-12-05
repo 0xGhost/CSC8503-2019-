@@ -279,12 +279,20 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	float cRestitution = physA->GetElasticity() * physB->GetElasticity(); // disperse some kinectic energy
 
 	float j = (-(1.0f + cRestitution) * impulseForce) /
-		(totalMass + angularEffect);
+		(totalMass);// +angularEffect);
 
 	Vector3 fullImpulse = p.normal * j;
 
+	//physA->SetLinearVelocity(Vector3(0, 0, 0));
+	//physB->SetLinearVelocity(Vector3(0, 0, 0));
+
 	physA->ApplyLinearImpulse(-fullImpulse);
 	physB->ApplyLinearImpulse(fullImpulse);
+
+	j = (-(1.0f + cRestitution) * impulseForce) /
+		(totalMass + angularEffect);
+
+	fullImpulse = p.normal * j;
 
 	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
 	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, fullImpulse));

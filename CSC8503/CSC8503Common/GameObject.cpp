@@ -20,10 +20,10 @@ GameObject::GameObject(string objectName, string objTag)	{
 }
 
 GameObject::~GameObject()	{
-	delete boundingVolume;
 	delete physicsObject;
 	delete renderObject;
 	delete networkObject;
+	delete boundingVolume;
 }
 
 bool GameObject::GetBroadphaseAABB(Vector3&outSize) const {
