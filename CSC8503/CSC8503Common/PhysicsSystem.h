@@ -37,7 +37,7 @@ namespace NCL {
 			void ClearForces();
 
 			void IntegrateAccel(float dt);
-			void IntegrateVelocity(float dt);
+			void IntegrateVelocity(float dt, bool useFriction = true);
 
 			void UpdateConstraints(float dt);
 

@@ -27,6 +27,10 @@ WatcherObject::WatcherObject(string name, string tag) :HumanObject(name, tag)
 		playerPos = playerPos + focusPlayer->GetPhysicsObject()->GetLinearVelocity() * distance / 100;
 		Vector3 direction = playerPos - watcherPos;
 
+		direction.y = 0;
+		Vector3 torque = Vector3::Cross(this->GetTransform().GetForward(), -direction.Normalised());
+		this->GetPhysicsObject()->AddTorque(torque * 50);
+
 		RayCollision closestCollision;
 		Ray ray(watcherPos, rayDir.Normalised());
 
@@ -34,9 +38,7 @@ WatcherObject::WatcherObject(string name, string tag) :HumanObject(name, tag)
 		{
 			if (((GameObject*)closestCollision.node)->GetName().compare("Goose") == 0)
 			{
-				direction.y = 0;
-				Vector3 torque = Vector3::Cross(this->GetTransform().GetForward(), -direction.Normalised());
-				this->GetPhysicsObject()->AddTorque(torque * 50);
+
 				
 				if (coolDownTime < 0.0f)
 				{
@@ -56,7 +58,7 @@ WatcherObject::WatcherObject(string name, string tag) :HumanObject(name, tag)
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 		playerPos = playerPos + focusPlayer->GetPhysicsObject()->GetLinearVelocity() * distance / 100;
-		throwBall((playerPos - watcherPos).Normalised(), this);
+		throwBall((playerPos - (watcherPos + Vector3(0,5,0))).Normalised(), this);
 		coolDownTime = totalCoolDownTime;
 		this->GetRenderObject()->SetColour(Vector4(0.9f, 0.0f, 0.1f, 1));
 		ready = 5;

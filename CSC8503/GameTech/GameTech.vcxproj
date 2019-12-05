@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ChaserObject.cpp" />
     <ClCompile Include="GameTechRenderer.cpp" />
     <ClCompile Include="HumanObject.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -149,6 +150,7 @@
     <ClCompile Include="WatcherObject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChaserObject.h" />
     <ClInclude Include="GameTechRenderer.h" />
     <ClInclude Include="HumanObject.h" />
     <ClInclude Include="NetworkedGame.h" />

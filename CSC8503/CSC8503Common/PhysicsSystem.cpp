@@ -249,8 +249,8 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	transformB.SetWorldPosition(transformB.GetWorldPosition() +
 		(p.normal * p.penetration * (physB->GetInverseMass() / totalMass)));
 
-	Vector3 relativeA = p.position - transformA.GetWorldPosition();
-	Vector3 relativeB = p.position - transformB.GetWorldPosition();
+	Vector3 relativeA = p.localA;
+	Vector3 relativeB = p.localB;
 
 	Vector3 angVelocityA =
 		Vector3::Cross(physA->GetAngularVelocity(), relativeA);
@@ -279,7 +279,7 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	float cRestitution = physA->GetElasticity() * physB->GetElasticity(); // disperse some kinectic energy
 
 	float j = (-(1.0f + cRestitution) * impulseForce) /
-		(totalMass);// +angularEffect);
+		(totalMass + angularEffect);
 
 	Vector3 fullImpulse = p.normal * j;
 
@@ -289,10 +289,10 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 	physA->ApplyLinearImpulse(-fullImpulse);
 	physB->ApplyLinearImpulse(fullImpulse);
 
-	j = (-(1.0f + cRestitution) * impulseForce) /
-		(totalMass + angularEffect);
+	//j = (-(1.0f + cRestitution) * impulseForce) /
+		//(totalMass + angularEffect);
 
-	fullImpulse = p.normal * j;
+	//fullImpulse = p.normal * j;
 
 	physA->ApplyAngularImpulse(Vector3::Cross(relativeA, -fullImpulse));
 	physB->ApplyAngularImpulse(Vector3::Cross(relativeB, fullImpulse));
@@ -411,7 +411,7 @@ void PhysicsSystem::IntegrateAccel(float dt) {
 		Vector3 accel = force * inverseMass;
 
 		if (applyGravity && inverseMass > 0) {
-			accel += gravity; // don ’t move infinitely heavy things
+			accel += gravity / powf(1.0f - object->GetFriction(), dt); // don ’t move infinitely heavy things
 		}
 
 		linearVel += accel * dt; // integrate accel !
@@ -435,7 +435,7 @@ position and orientation. It may be called multiple times
 throughout a physics update, to slowly move the objects through
 the world, looking for collisions.
 */
-void PhysicsSystem::IntegrateVelocity(float dt) {
+void PhysicsSystem::IntegrateVelocity(float dt, bool useFriction) {
 	GameObjectIterator first;
 	GameObjectIterator last;
 	gameWorld.GetObjectIterators(first, last);
@@ -459,7 +459,7 @@ void PhysicsSystem::IntegrateVelocity(float dt) {
 		transform.SetWorldPosition(position);
 
 		// Linear Damping
-		linearVel = linearVel * frameDamping;
+		linearVel = linearVel * (useFriction? frameDamping : 1);
 		object->SetLinearVelocity(linearVel);
 
 		// Orientation Stuff

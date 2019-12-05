@@ -7,6 +7,7 @@
 #include <fstream>
 #include <stdexcept>
 #include "WatcherObject.h"
+#include "ChaserObject.h"
 
 #include "../CSC8503Common/PositionConstraint.h"
 
@@ -267,6 +268,7 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::LockedObjectMovement() {
+	if (!selectionObject) return;
 	Matrix4 view = world->GetMainCamera()->BuildViewMatrix();
 	Matrix4 camWorld = view.Inverse();
 
@@ -570,6 +572,8 @@ void TutorialGame::InitWorld() {
 	physics->SetLayerCollision(2, 2, false); // cube - cube
 	physics->SetLayerCollision(5, 5, false); // freeBall - freeBall
 	physics->SetLayerCollision(5, 2, false); // freeBall - cube
+	physics->SetLayerCollision(5, 3, false); // freeBall - enemy
+	physics->SetLayerCollision(4, 3, false); // ball - enemy
 
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
 	lightPos = Vector3(-200.0f, 160.0f, -200.0f);
@@ -743,7 +747,7 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 
 	goose->SetRenderObject(new RenderObject(&goose->GetTransform(), gooseMesh, nullptr, basicShader));
 	goose->SetPhysicsObject(new PhysicsObject(&goose->GetTransform(), goose->GetBoundingVolume()));
-
+	goose->GetPhysicsObject()->SetElasticity(0.0f);
 	goose->GetPhysicsObject()->SetInverseMass(inverseMass);
 	goose->GetPhysicsObject()->InitSphereInertia();
 
@@ -804,7 +808,7 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int
 		minVal.y = min(minVal.y, i.y);
 	}
 	
-	GameObject* character = r > 0.5f ? new GameObject("Chaser") : new WatcherObject("Watcher");//new GameObject(r > 0.5f ? "Chaser" : "Watcher");
+	GameObject* character = r > 0.5f ? (GameObject*)(new ChaserObject("Chaser")) : (GameObject*)(new WatcherObject("Watcher"));//new GameObject(r > 0.5f ? "Chaser" : "Watcher");
 
 	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
 	character->SetBoundingVolume((CollisionVolume*)volume);
@@ -827,15 +831,17 @@ GameObject* NCL::CSC8503::TutorialGame::AddWatcherToWorld(const Vector3& positio
 {
 	WatcherObject* watcher = (WatcherObject*)AddCharacterToWorld(position, 0);
 	watcher->SetWatcherFunc([&](Vector3 direction, GameObject* g) {
-		AddBallToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f, direction);
+		AddBallToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f + Vector3(0,5,0), direction);
 	});
-
+	watcher->SetLayer(3);
 	return watcher;
 }
 
 GameObject* NCL::CSC8503::TutorialGame::AddChaserToWorld(const Vector3& position)
 {
-	GameObject* chaser = AddCharacterToWorld(position, 1);
+	ChaserObject* chaser = (ChaserObject*)AddCharacterToWorld(position, 1);
+	chaser->SetLayer(3);
+	chaser->InitOriginPosition();
 	return chaser;
 }
 
@@ -878,9 +884,12 @@ GameObject* NCL::CSC8503::TutorialGame::AddBallToWorld(const Vector3& position, 
 		ball = freeBalls.back();
 		freeBalls.pop_back();
 		ball->GetTransform().SetWorldPosition(position);
+		ball->GetPhysicsObject()->ClearForces();
+		ball->GetPhysicsObject()->SetLinearVelocity(Vector3(0, 0, 0));
+		ball->GetPhysicsObject()->SetAngularVelocity(Vector3(0, 0, 0));
 		ball->objTime = 0;
-		ball->SetLayer(1);
 	}
+	ball->SetLayer(4);
 	ball->GetPhysicsObject()->ApplyLinearImpulse(direction * 100);//AddForce(direction * 3000);// ->AddForce(-direction * 5000);
 	return ball;
 }
