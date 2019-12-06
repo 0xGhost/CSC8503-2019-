@@ -17,7 +17,8 @@ namespace NCL {
 	namespace CSC8503 {
 		class NetworkObject;
 		class GameObject;
-		typedef std::function<void(float dt, GameObject* g)> UpdateFunc;
+		typedef std::function<void(float dt, GameObject * g)> UpdateFunc;
+		typedef std::function<void(GameObject *thisObj, GameObject* otherObj)> CollisionFunc;
 		class GameObject {
 		public:
 			GameObject(string name = "", string tag = "");
@@ -51,6 +52,7 @@ namespace NCL {
 			virtual void Update(float dt) { updateFunc(dt, this); if (stateMachine) stateMachine->Update(); }
 
 			virtual void OnCollisionBegin(GameObject* otherObject) {
+				collisionFunc(this, otherObject);
 				//std::cout << "OnCollisionBegin event occured!\n";
 			}
 
@@ -65,6 +67,7 @@ namespace NCL {
 			static void ResetID() { nextId = 0; }
 
 			void SetUpdateFunc(UpdateFunc func) { updateFunc = func; }
+			void SetCollisionFunc(CollisionFunc func) { collisionFunc = func; }
 			void SetStateMachine(StateMachine* s) { stateMachine = s; }
 			StateMachine* GetStateMachine() const { return stateMachine; }
 
@@ -89,6 +92,7 @@ namespace NCL {
 			static unsigned long long nextId;
 			unsigned int layer;
 			UpdateFunc updateFunc;
+			CollisionFunc collisionFunc;
 			StateMachine *stateMachine;
 			Vector3 broadphaseAABB;
 		};

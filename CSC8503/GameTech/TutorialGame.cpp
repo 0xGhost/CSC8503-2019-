@@ -156,36 +156,6 @@ void TutorialGame::UpdateGame(float dt) {
 	else
 		MoveSelectedObject();
 
-#pragma region testPathFinding
-	vector<Vector3> testNodes;
-	NavigationPath outPath;
-
-	//bool found = navMap->FindPath(0,5,8,3,outPath);
-	Vector3 pos(5, 0, -45);
-	pos -= worldOffset;
-	int x = pos.x / (TILESIZE * 2);
-	int y = pos.z / (TILESIZE * 2);
-	bool found = navMap->FindPath(y, x, 8, 3, outPath);
-	//bool found = navMap->FindPath(Vector3(5, 0, -45), Vector3(-15, 0, 35), outPath);
-	//bool found = navMap->FindPath(Vector3(-45,0,5),Vector3(35,0,-15),outPath);
-
-
-	while (outPath.PopWaypoint(pos)) {
-		testNodes.push_back(pos);
-	}
-	for (int i = 1; i < testNodes.size(); ++i) {
-		Vector3 a = testNodes[i - 1];
-		Vector3 b = testNodes[i];
-		a.y = 15;
-		b.y = 15;
-		a += worldOffset;
-		b += worldOffset;
-		Debug::DrawLine(a, b, Vector4(0, 1, 0, 1));
-	}
-#pragma endregion
-
-	
-
 	world->UpdateWorld(dt);
 	
 	renderer->Update(dt);
@@ -591,7 +561,7 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
-#if 1 // coursework
+#if 0 // coursework
 	GameObject::ResetID();
 	physics->SetLayerCollision(2, 2, false); // cube - cube
 	physics->SetLayerCollision(5, 5, false); // freeBall - freeBall
@@ -632,7 +602,8 @@ void TutorialGame::InitWorld() {
 	HumanObject::SetPlayerIterator(players.begin(), players.end());
 	physics->InitQuadTree();
 #else
-	InitMixedGridWorld(10, 10, 6.0f, 6.0f);
+	BridgeConstraintTest();
+	//InitMixedGridWorld(10, 10, 6.0f, 6.0f);
 	GameObject* goose = AddGooseToWorld(Vector3(30, 2, 0));
 	//goose->SetLayer(2);
 
@@ -762,7 +733,6 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	float inverseMass = 1.0f;
 
 	GameObject* goose = new GameObject("Goose");
-
 
 	SphereVolume* volume = new SphereVolume(size);
 	goose->SetBoundingVolume((CollisionVolume*)volume);

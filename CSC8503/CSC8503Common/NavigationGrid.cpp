@@ -90,6 +90,10 @@ void NCL::CSC8503::NavigationGrid::BuildNodes()
 					if (n.connected[i]->type & 1) {
 						n.costs[i] = 1;
 					}
+					else if (n.connected[i]->type & 64)
+					{
+						n.costs[i] = 2;
+					}
 					else {
 						n.connected[i] = nullptr; //actually a wall, disconnect!
 					}
