@@ -66,6 +66,11 @@ void TestPathfinding() {
 
 	NavigationPath outPath;
 
+	//int a = 10;
+	//double b = 20.3;
+	//int c;
+	//c = (int)((double)a * b);
+
 	Vector3 startPos(80, 0, 10);
 	Vector3 endPos(80, 0, 80);
 
@@ -81,7 +86,8 @@ void DisplayPathfinding() {
 	for (int i = 1; i < testNodes.size(); ++i) {
 		Vector3 a = testNodes[i - 1];
 		Vector3 b = testNodes[i];
-
+		a.y = 15;
+		b.y = 15;
 		Debug::DrawLine(a, b, Vector4(0, 1, 0, 1));
 	}
 }
@@ -108,7 +114,7 @@ int main() {
 
 	//TestStateMachine();
 	TestNetworking();
-	TestPathfinding();
+	//TestPathfinding();
 
 	w->ShowOSPointer(false);
 	w->LockMouseToWindow(true);
@@ -130,7 +136,7 @@ int main() {
 			w->ShowConsole(false);
 		}
 
-		DisplayPathfinding();
+		//DisplayPathfinding();
 
 		w->SetTitle("Arknights Simulator! frame time:" + std::to_string(1000.0f * dt) + "     \tFPS:" + std::to_string((int)(1.0f / dt)));
 

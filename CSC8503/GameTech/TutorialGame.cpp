@@ -27,7 +27,8 @@ TutorialGame::TutorialGame() {
 	useGravity = false;
 	inSelectionMode = false;
 	mapSize = Vector2(10, 10);
-	mapTiles = vector<int>(mapData, mapData + 100);
+	mapTiles = new int[100];
+	memcpy(mapTiles, mapData, 100 * sizeof(int));
 	Debug::SetRenderer(renderer);
 
 	InitialiseAssets();
@@ -35,20 +36,14 @@ TutorialGame::TutorialGame() {
 
 void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (invalid_argument)
 {
-	ifstream fileInput;
-	int numberOfPuzzles;
-	if (fileName.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"/*"a-to-zA-to-Z0-to-9_."*/) != std::string::npos)
-	{
-		throw invalid_argument("File name invalid \"" + fileName + "\".");
-	}
-
-	fileInput.open(fileName.c_str());
+	ifstream fileInput(Assets::DATADIR + fileName);
 
 	if (fileInput.fail())
 		throw invalid_argument("Fail to read the file \"" + fileName + "\".");
 
 	fileInput >> mapSize.x >> mapSize.y;
-	mapTiles.clear();
+	delete[] mapTiles;
+	mapTiles = new int[mapSize.x * mapSize.y];
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for (int z = 0; z < mapSize.y; z++)
@@ -57,7 +52,7 @@ void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (inva
 			fileInput >> type;
 			if (type >= TileType::Invaild)
 				throw invalid_argument("File contain invalid data: " + type);
-			mapTiles.push_back(type);
+			mapTiles[IndexOf(x,z)] = type;
 		}
 	}
 
@@ -66,8 +61,7 @@ void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (inva
 
 void NCL::CSC8503::TutorialGame::SaveMapData(const string& fileName) throw (invalid_argument)
 {
-	ofstream fileOutput;
-	fileOutput.open(fileName.c_str());
+	ofstream fileOutput(Assets::DATADIR + fileName);
 
 	if (fileOutput.fail())
 		throw invalid_argument("Fail to write the file \"" + fileName + "\".");
@@ -99,7 +93,7 @@ void TutorialGame::InitialiseAssets() {
 
 	loadFunc("cube.msh", &cubeMesh);
 	loadFunc("sphere.msh", &sphereMesh);
-	loadFunc("goose.msh", &gooseMesh);
+	loadFunc("CenteredGoose.msh", &gooseMesh);
 	loadFunc("CharacterA.msh", &keeperMesh);
 	loadFunc("CharacterM.msh", &charA);
 	loadFunc("CharacterF.msh", &charB);
@@ -119,6 +113,8 @@ TutorialGame::~TutorialGame() {
 	delete basicTex;
 	delete basicShader;
 
+	delete navMap;
+	delete mapTiles;
 	delete physics;
 	delete renderer;
 	delete world;
@@ -152,8 +148,6 @@ void TutorialGame::UpdateGame(float dt) {
 	Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
 		" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
 		Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
-	//Debug::Print("camera" + world->GetMainCamera()->GetPosition());
-	Debug::DrawLine(Vector3(), lightPos, Vector4(0.7, 0, 0, 1));
 
 
 	SelectObject();
@@ -162,10 +156,38 @@ void TutorialGame::UpdateGame(float dt) {
 	else
 		MoveSelectedObject();
 
+#pragma region testPathFinding
+	vector<Vector3> testNodes;
+	NavigationPath outPath;
+
+	//bool found = navMap->FindPath(0,5,8,3,outPath);
+	Vector3 pos(5, 0, -45);
+	pos -= worldOffset;
+	int x = pos.x / (TILESIZE * 2);
+	int y = pos.z / (TILESIZE * 2);
+	bool found = navMap->FindPath(y, x, 8, 3, outPath);
+	//bool found = navMap->FindPath(Vector3(5, 0, -45), Vector3(-15, 0, 35), outPath);
+	//bool found = navMap->FindPath(Vector3(-45,0,5),Vector3(35,0,-15),outPath);
+
+
+	while (outPath.PopWaypoint(pos)) {
+		testNodes.push_back(pos);
+	}
+	for (int i = 1; i < testNodes.size(); ++i) {
+		Vector3 a = testNodes[i - 1];
+		Vector3 b = testNodes[i];
+		a.y = 15;
+		b.y = 15;
+		a += worldOffset;
+		b += worldOffset;
+		Debug::DrawLine(a, b, Vector4(0, 1, 0, 1));
+	}
+#pragma endregion
+
+	
 
 	world->UpdateWorld(dt);
-	if (selectionObject)
-		std::cout << selectionObject->GetPhysicsObject()->GetLinearVelocity() << " \t";
+	
 	renderer->Update(dt);
 	physics->Update(dt);
 	
@@ -225,8 +247,9 @@ void TutorialGame::UpdateKeys() {
 	{
 		cout << "Enter map size(two integer): ";
 		cin >> mapSize.x >> mapSize.y;
-		mapTiles.resize(mapSize.x * mapSize.y);
-		fill(mapTiles.begin(), mapTiles.end(), TileType::LowGround);
+		delete[] mapTiles;
+		mapTiles = new int[mapSize.x * mapSize.y];
+		memset(mapTiles, TileType::LowGround, mapSize.x * mapSize.y * sizeof(int));
 		InitWorld();
 		selectionObject = nullptr;
 		isEditMode = true;
@@ -461,8 +484,9 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(10, 80), Vector4(0.2, 0.2, 0.2, 0.9));
 	Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
-	int x = (int)((pos.x - TILESIZE) / 10 + mapSize.x / 2);
-	int y = (int)((pos.z - TILESIZE) / 10 + mapSize.y / 2);
+	pos -= worldOffset;
+	int x = pos.x / (TILESIZE * 2);
+	int y = pos.z / (TILESIZE * 2);
 	TileType type = (TileType)mapTiles[IndexOf(x, y)];
 	if ((Window::GetKeyboard()->KeyDown(KeyboardKeys::N)))
 	{
@@ -591,8 +615,8 @@ void TutorialGame::InitWorld() {
 	renderer->SetShadowProjMatrix(Matrix4::Orthographic(lightPos.Length() - nearfarD*2, lightPos.Length() + nearfarD*2, d + 1, -d - 1, topdownD, -topdownD));
 	//renderer->SetShadowProjMatrix(Matrix4::Perspective(20, 500, 1, 70));
 #pragma endregion
-
-	vector<int> mapTemp = mapTiles;
+	worldOffset = Vector3(-mapSize.x * TILESIZE + TILESIZE, 0, -mapSize.y * TILESIZE + TILESIZE);
+	//int* mapTemp = mapTiles;
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for (int z = 0; z < mapSize.y; z++)
@@ -602,6 +626,7 @@ void TutorialGame::InitWorld() {
 			AddTileToWorld(x, z);
 		}
 	}
+	navMap = new NavigationGrid(TILESIZE * 2, mapSize.x, mapSize.y, mapTiles);
 	
 	HumanObject::SetPhysics(physics);
 	HumanObject::SetPlayerIterator(players.begin(), players.end());
@@ -682,8 +707,8 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 1) * check(mapTiles[IndexOf(x, z)], TileType::Water)
 		+ Vector4(0.3f, 1, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::LowGround)
 		+ Vector4(0.8f, 0.5f, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::HighGround);
-	Vector3 position = Vector3((x - mapSize.x / 2) * 2 * TILESIZE + TILESIZE, y, (z - mapSize.y / 2) * 2 * TILESIZE + TILESIZE);
-
+	Vector3 position = Vector3(x * 2 * TILESIZE, y, z  * 2 * TILESIZE);
+	position += worldOffset;
 	Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
 	GameObject* onTile;
 	if (mapTiles[IndexOf(x, z)] == TileType::Apple)
@@ -758,7 +783,7 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 		//g->GetPhysicsObject()->AddForceAtLocalPosition(-torque * 100, Vector3(0,1,0));
 		//g->GetPhysicsObject()->AddForceAtLocalPosition(torque * 100, Vector3(0, -1, 0));
 		Debug::DrawLine(g->GetTransform().GetWorldPosition(), g->GetTransform().GetUp(), 10);
-		g->GetPhysicsObject()->AddTorque(-torque * 200);
+		g->GetPhysicsObject()->AddTorque(-torque * 20);
 		//g->GetPhysicsObject()->AddForceAtLocalPosition(Vector3(0, 5, 0), Vector3(0, 10, 0));
 		//g->GetPhysicsObject()->AddForceAtLocalPosition(Vector3(0, -10, 0), Vector3(0, -10, 0));
 	});
@@ -810,7 +835,7 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int
 	
 	GameObject* character = r > 0.5f ? (GameObject*)(new ChaserObject("Chaser")) : (GameObject*)(new WatcherObject("Watcher"));//new GameObject(r > 0.5f ? "Chaser" : "Watcher");
 
-	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
+	SphereVolume* volume = new SphereVolume(0.9f * meshSize);//new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform().SetWorldScale(Vector3(meshSize, meshSize, meshSize));
@@ -842,6 +867,16 @@ GameObject* NCL::CSC8503::TutorialGame::AddChaserToWorld(const Vector3& position
 	ChaserObject* chaser = (ChaserObject*)AddCharacterToWorld(position, 1);
 	chaser->SetLayer(3);
 	chaser->InitOriginPosition();
+	chaser->SetChaserFunc([&](Vector3 destination, ChaserObject* g) {
+		Vector3 pos = g->GetTransform().GetWorldPosition();
+		pos -= worldOffset;
+		int x = (pos.x / (TILESIZE * 2) + 0.5);
+		int y = (pos.z / (TILESIZE * 2) + 0.5);
+		destination -= worldOffset;
+		int dx = (destination.x / (TILESIZE * 2) + 0.5);
+		int dy = (destination.z / (TILESIZE * 2) + 0.5);
+		navMap->FindPath(y,x, dy,dx, g->path);
+	});
 	return chaser;
 }
 

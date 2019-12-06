@@ -2,7 +2,7 @@
 #include "../../Common/Assets.h"
 
 #include <fstream>
-
+#define check(a, b) ((a) & (b) ? 1 : 0)
 using namespace NCL;
 using namespace CSC8503;
 
@@ -19,6 +19,24 @@ NavigationGrid::NavigationGrid() {
 	gridWidth = 0;
 	gridHeight = 0;
 	allNodes = nullptr;
+}
+
+NCL::CSC8503::NavigationGrid::NavigationGrid(int tileSize, int width, int height, int* node)
+{
+	this->nodeSize = tileSize;
+	gridWidth = width;
+	gridHeight = height;
+	allNodes = new GridNode[gridWidth * gridHeight];
+	for (int x = 0; x < gridWidth; ++x) {
+		for (int y = 0; y < gridHeight; ++y)
+		{
+			GridNode& n = allNodes[(gridHeight * x) + y];
+
+			n.type = node[(gridHeight * x) + y];
+			n.position = Vector3((float)(x * tileSize), 0, (float)(y * tileSize));
+		}
+	}
+	BuildNodes();
 }
 
 NavigationGrid::NavigationGrid(const std::string& filename) : NavigationGrid() {
@@ -39,7 +57,16 @@ NavigationGrid::NavigationGrid(const std::string& filename) : NavigationGrid() {
 			n.position = Vector3((float)(x * gridWidth), 0, (float)(y * gridHeight));
 		}
 	}
+	BuildNodes();
 
+}
+
+NavigationGrid::~NavigationGrid() {
+	delete[] allNodes;
+}
+
+void NCL::CSC8503::NavigationGrid::BuildNodes()
+{
 	//now to build the connectivity between the nodes
 	for (int y = 0; y < gridHeight; ++y) {
 		for (int x = 0; x < gridWidth; ++x) {
@@ -58,11 +85,12 @@ NavigationGrid::NavigationGrid(const std::string& filename) : NavigationGrid() {
 				n.connected[3] = &allNodes[(gridWidth * (y)) + (x + 1)];
 			}
 			for (int i = 0; i < 4; ++i) {
+
 				if (n.connected[i]) {
-					if (n.connected[i]->type == '.') {
+					if (n.connected[i]->type & 1) {
 						n.costs[i] = 1;
 					}
-					if (n.connected[i]->type == 'x') {
+					else {
 						n.connected[i] = nullptr; //actually a wall, disconnect!
 					}
 				}
@@ -71,18 +99,16 @@ NavigationGrid::NavigationGrid(const std::string& filename) : NavigationGrid() {
 	}
 }
 
-NavigationGrid::~NavigationGrid() {
-	delete[] allNodes;
+#include <limits>
+#include <queue>
+
+bool NCL::CSC8503::my_comparison(const GridNode* lhs, const GridNode* rhs)
+{
+	return (lhs->f < rhs->f);
 }
 
-bool NavigationGrid::FindPath(const Vector3& from, const Vector3& to, NavigationPath& outPath) {
-	// need to work out which node ¡¯from ¡¯ sits in , and ¡¯to ¡¯ sits in
-	int fromX = (from.x / nodeSize);
-	int fromZ = (from.z / nodeSize);
-
-	int toX = (to.x / nodeSize);
-	int toZ = (to.z / nodeSize);
-
+bool NCL::CSC8503::NavigationGrid::FindPath(const int& fromX, const int& fromZ, const int& toX, const int& toZ, NavigationPath& outPath)
+{
 	if (fromX < 0 || fromX > gridWidth - 1 ||
 		fromZ < 0 || fromZ > gridHeight - 1) {
 		return false; // outside of map region !
@@ -95,11 +121,21 @@ bool NavigationGrid::FindPath(const Vector3& from, const Vector3& to, Navigation
 
 	GridNode* startNode = &allNodes[(fromZ * gridWidth) + fromX];
 	GridNode* endNode = &allNodes[(toZ * gridWidth) + toX];
+	std::vector < GridNode*> q;
 
-	std::vector<GridNode*> openList;
+	for (int i = 0; i < gridWidth * gridHeight; i++) {
+		if (allNodes + i == startNode)
+			allNodes[i].f = allNodes[i].g = 0;
+		else 
+			allNodes[i].f = allNodes[i].g = std::numeric_limits<float>::max();
+		allNodes[i].parent = nullptr;
+	}
+
+	std::set<GridNode*, decltype(&my_comparison)> openList(&my_comparison);
+	//std::set<GridNode*, GridNode> openList;
 	std::vector<GridNode*> closedList;
 
-	openList.emplace_back(startNode);
+	openList.insert(startNode);
 
 	startNode->f = 0;
 	startNode->g = 0;
@@ -107,8 +143,8 @@ bool NavigationGrid::FindPath(const Vector3& from, const Vector3& to, Navigation
 
 	GridNode* currentBestNode = nullptr;
 	while (!openList.empty()) {
-		currentBestNode = RemoveBestNode(openList);
-
+		currentBestNode = *openList.begin();
+		openList.erase(openList.begin());
 		if (currentBestNode == endNode) {// we ¡¯ve found the path !
 			GridNode* node = endNode;
 			while (node != nullptr) {
@@ -129,13 +165,13 @@ bool NavigationGrid::FindPath(const Vector3& from, const Vector3& to, Navigation
 				}
 
 				float h = Heuristic(neighbour, endNode);
-				float g = currentBestNode->g + currentBestNode->costs[i];
-				float f = h + g;
+				float g = currentBestNode->g + neighbour->costs[i];
+				float f =  g;
 
-				bool inOpen = NodeInList(neighbour, openList);
+				bool inOpen = NodeInSet(neighbour, openList);
 
 				if (!inOpen) { // first time we ¡¯ve seen this neighbour
-					openList.emplace_back(neighbour);
+					openList.insert(neighbour);
 				}
 				// might be a better route to this node !
 				if (!inOpen || f < neighbour->f) {
@@ -143,15 +179,33 @@ bool NavigationGrid::FindPath(const Vector3& from, const Vector3& to, Navigation
 					neighbour->f = f;
 					neighbour->g = g;
 				}
+				//openList.insert(neighbour);
 			}
 			closedList.emplace_back(currentBestNode);
 		}
+
 	}
 	return false; // open list emptied out with no path !
 }
 
+bool NavigationGrid::FindPath(const Vector3& from, const Vector3& to, NavigationPath& outPath) {
+	// need to work out which node ¡¯from ¡¯ sits in , and ¡¯to ¡¯ sits in
+	int fromX = from.x / nodeSize;
+	int fromZ = from.z / nodeSize;
+
+	int toX = (to.x + gridWidth / 2) / nodeSize;
+	int toZ = (to.z + gridHeight / 2) / nodeSize;
+	return FindPath(fromX, fromZ, toX, toZ, outPath);
+}
+
 bool NavigationGrid::NodeInList(GridNode* n, std::vector<GridNode*>& list) const {
 	std::vector<GridNode*>::iterator i = std::find(list.begin(), list.end(), n);
+	return i == list.end() ? false : true;
+}
+
+bool NCL::CSC8503::NavigationGrid::NodeInSet(GridNode* n, std::set<GridNode*, decltype(&my_comparison)>& list) const
+{
+	auto i = std::find(list.begin(), list.end(), n);
 	return i == list.end() ? false : true;
 }
 
@@ -171,5 +225,8 @@ GridNode* NavigationGrid::RemoveBestNode(std::vector<GridNode*>& list) const {
 }
 
 float NavigationGrid::Heuristic(GridNode* hNode, GridNode* endNode) const {
-	return (hNode->position - endNode->position).Length();
+	float dis = abs(hNode->position.x - hNode->position.x);
+	dis += abs(hNode->position.z - hNode->position.z);
+	return dis;
+	//return (hNode->position - endNode->position).Length();
 }

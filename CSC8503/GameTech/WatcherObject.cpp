@@ -34,7 +34,7 @@ WatcherObject::WatcherObject(string name, string tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, rayDir.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true))
+		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
 			if (((GameObject*)closestCollision.node)->GetName().compare("Goose") == 0)
 			{

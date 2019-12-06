@@ -1,10 +1,12 @@
 #pragma once
 #include "GameTechRenderer.h"
+#include "../../Common/Assets.h"
 #include "../CSC8503Common/PhysicsSystem.h"
+#include "../CSC8503Common/NavigationGrid.h"
+
 const int TILESIZE = 5;
 const float WATERY = -0.2f;
 const float HIGHGROUNDY = 4;// -WATERY;
-
 
 
 
@@ -116,7 +118,7 @@ namespace NCL {
 
 			float dt;
 			Vector2 mapSize;
-			vector<int> mapTiles;
+			int* mapTiles;
 			int mapData[100] = 
 			{
 				4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -135,13 +137,15 @@ namespace NCL {
 
 			vector<GameObject*> players;
 			vector<GameObject*> freeBalls;
-
+			NavigationMap* navMap;
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
 			Vector3 lockedOffset = Vector3(0, 100, -20);//Vector3(0, 14, 20);
 			void LockCameraToObject(GameObject* o) {
 				lockedObject = o;
 			}
+
+			Vector3 worldOffset;
 		};
 	}
 }
