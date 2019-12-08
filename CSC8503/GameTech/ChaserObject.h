@@ -11,7 +11,7 @@ namespace NCL {
 			public HumanObject
 		{
 		public:
-			ChaserObject(string name = "", string tag = "");
+			ChaserObject(string name = "", Tag tag = Tag::Null);
 
 			//virtual void Update(float dt) override;
 
@@ -27,8 +27,8 @@ namespace NCL {
 			float searchDistance;
 			float detectionDistance;
 			Vector3 originPosition;
-			float walkForce = 80;
-			float runForce = 200;
+			float walkForce = 100;
+			float runForce = 160;
 			int state;
 			ChaserFunc getPath;
 			//GameObject *playerObject;

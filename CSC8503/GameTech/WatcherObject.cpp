@@ -1,7 +1,7 @@
 #include "WatcherObject.h"
 #include "../CSC8503Common/PhysicsSystem.h"
 
-WatcherObject::WatcherObject(string name, string tag) :HumanObject(name, tag) 
+WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag) 
 {
 	attackDistance = 50;
 	detectionDistance = 30;
@@ -36,7 +36,7 @@ WatcherObject::WatcherObject(string name, string tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetName().compare("Goose") == 0)
+			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
 			{
 
 				

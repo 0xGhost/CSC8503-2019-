@@ -1,8 +1,7 @@
 #include "HumanObject.h"
 
-//vector<GameObject*> emptyVector;
-GameObjectIterator HumanObject::firstPlayer;// = emptyVector.end();
-GameObjectIterator HumanObject::lastPlayer;// = emptyVector.end();
+GameObjectIterator HumanObject::firstPlayer;
+GameObjectIterator HumanObject::lastPlayer;
 PhysicsSystem* HumanObject::physics;
 
 void NCL::CSC8503::HumanObject::UpdateDistance()

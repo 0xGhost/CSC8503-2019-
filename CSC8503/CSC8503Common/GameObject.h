@@ -15,13 +15,24 @@ using std::vector;
 
 namespace NCL {
 	namespace CSC8503 {
+		enum Tag {
+			Null,
+			PlayerTag,
+			TileTag,
+			HumanTag,
+			BallTag,
+			AppleTag,
+			HomeTag,
+			MaxTag,
+		};
+
 		class NetworkObject;
 		class GameObject;
 		typedef std::function<void(float dt, GameObject * g)> UpdateFunc;
 		typedef std::function<void(GameObject *thisObj, GameObject* otherObj)> CollisionFunc;
 		class GameObject {
 		public:
-			GameObject(string name = "", string tag = "");
+			GameObject(string name = "", Tag tag = Tag::Null);
 			~GameObject();
 
 			float objTime;
@@ -34,7 +45,7 @@ namespace NCL {
 			bool IsStatic() const { return isStatic; }
 
 			const string& GetName() const { return name; }
-			const string& GetTag() const { return tag; }
+			const Tag GetTag() const { return tag; }
 
 			const Transform& GetConstTransform() const { return transform; }
 			Transform& GetTransform() { return transform; }
@@ -43,16 +54,18 @@ namespace NCL {
 			PhysicsObject* GetPhysicsObject() const { return physicsObject; }
 			NetworkObject* GetNetworkObject() const { return networkObject; }
 
+			void SetName(string n) { name = n; }
+			void SetTag(Tag t) { tag = t; }
+
 			void SetRenderObject(RenderObject* newObject) { renderObject = newObject; }
 			void SetPhysicsObject(PhysicsObject* newObject) { physicsObject = newObject; }
 
 			void SetActive(bool a) { isActive = a; }
 			void SetStatic(bool s) { isStatic = s; }
 
-			virtual void Update(float dt) { updateFunc(dt, this); if (stateMachine) stateMachine->Update(); }
+			virtual void Update(float dt) { updateFunc(dt, this); }
 
 			virtual void OnCollisionBegin(GameObject* otherObject) {
-				collisionFunc(this, otherObject);
 				//std::cout << "OnCollisionBegin event occured!\n";
 			}
 
@@ -67,9 +80,6 @@ namespace NCL {
 			static void ResetID() { nextId = 0; }
 
 			void SetUpdateFunc(UpdateFunc func) { updateFunc = func; }
-			void SetCollisionFunc(CollisionFunc func) { collisionFunc = func; }
-			void SetStateMachine(StateMachine* s) { stateMachine = s; }
-			StateMachine* GetStateMachine() const { return stateMachine; }
 
 			bool GetBroadphaseAABB(Vector3& outsize) const;
 
@@ -87,13 +97,11 @@ namespace NCL {
 			bool	isActive;
 			bool	isStatic;
 			string	name;
-			string tag;
+			Tag tag;
 			unsigned long long id;
 			static unsigned long long nextId;
 			unsigned int layer;
 			UpdateFunc updateFunc;
-			CollisionFunc collisionFunc;
-			StateMachine *stateMachine;
 			Vector3 broadphaseAABB;
 		};
 	}

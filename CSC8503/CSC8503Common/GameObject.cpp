@@ -3,7 +3,7 @@
 
 using namespace NCL::CSC8503;
 unsigned long long GameObject::nextId = 0;
-GameObject::GameObject(string objectName, string objTag)	{
+GameObject::GameObject(string objectName, Tag objTag)	{
 	name			= objectName;
 	tag				= objTag;
 	isActive		= true;
@@ -15,7 +15,6 @@ GameObject::GameObject(string objectName, string objTag)	{
 	physicsObject	= nullptr;
 	renderObject	= nullptr;
 	networkObject	= nullptr;
-	stateMachine = nullptr;
 	updateFunc = std::function<void(float, GameObject*)>([](float, GameObject*) {});
 }
 

@@ -140,8 +140,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AppleObject.cpp" />
     <ClCompile Include="ChaserObject.cpp" />
     <ClCompile Include="GameTechRenderer.cpp" />
+    <ClCompile Include="GooseObject.cpp" />
     <ClCompile Include="HumanObject.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="NetworkedGame.cpp" />
@@ -150,8 +152,10 @@
     <ClCompile Include="WatcherObject.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AppleObject.h" />
     <ClInclude Include="ChaserObject.h" />
     <ClInclude Include="GameTechRenderer.h" />
+    <ClInclude Include="GooseObject.h" />
     <ClInclude Include="HumanObject.h" />
     <ClInclude Include="NetworkedGame.h" />
     <ClInclude Include="NetworkPlayer.h" />

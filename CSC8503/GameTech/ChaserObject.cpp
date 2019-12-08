@@ -1,7 +1,7 @@
 #include "ChaserObject.h"
 #include "../CSC8503Common/PhysicsSystem.h"
 
-ChaserObject::ChaserObject(string name, string tag) :HumanObject(name, tag)
+ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 {
 	searchDistance = 50;
 	detectionDistance = 30;
@@ -26,7 +26,7 @@ ChaserObject::ChaserObject(string name, string tag) :HumanObject(name, tag)
 
 			if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 			{
-				if (((GameObject*)closestCollision.node)->GetName().compare("Goose") == 0)
+				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
 				{
 					*state = 1;
 				}
@@ -59,7 +59,7 @@ ChaserObject::ChaserObject(string name, string tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetName().compare("Goose") == 0)
+			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
 			{
 				*state = 1;
 				return;
@@ -114,7 +114,7 @@ ChaserObject::ChaserObject(string name, string tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetName().compare("Goose") == 0)
+			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
 			{
 				*state = 1;
 			}
@@ -163,7 +163,7 @@ ChaserObject::ChaserObject(string name, string tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetName().compare("Goose") != 0)
+			if (((GameObject*)closestCollision.node)->GetTag() != PlayerTag)
 			{
 				*state = 2;
 			}

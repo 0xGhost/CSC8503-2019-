@@ -8,7 +8,8 @@
 #include <stdexcept>
 #include "WatcherObject.h"
 #include "ChaserObject.h"
-
+#include "GooseObject.h"
+#include "AppleObject.h"
 #include "../CSC8503Common/PositionConstraint.h"
 
 #define check(a, b) ((a) & (b) ? 1 : 0)
@@ -561,7 +562,7 @@ void TutorialGame::InitCamera() {
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();
 	physics->Clear();
-#if 0 // coursework
+#if 1 // coursework
 	GameObject::ResetID();
 	physics->SetLayerCollision(2, 2, false); // cube - cube
 	physics->SetLayerCollision(5, 5, false); // freeBall - freeBall
@@ -601,6 +602,8 @@ void TutorialGame::InitWorld() {
 	HumanObject::SetPhysics(physics);
 	HumanObject::SetPlayerIterator(players.begin(), players.end());
 	physics->InitQuadTree();
+	//useGravity = true;
+	//physics->UseGravity(true);
 #else
 	BridgeConstraintTest();
 	//InitMixedGridWorld(10, 10, 6.0f, 6.0f);
@@ -675,7 +678,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 {
 	float y = check(mapTiles[IndexOf(x, z)], TileType::Water) * WATERY
 		+ check(mapTiles[IndexOf(x, z)], TileType::HighGround) * HIGHGROUNDY;
-	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 1) * check(mapTiles[IndexOf(x, z)], TileType::Water)
+	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 0.1f) * check(mapTiles[IndexOf(x, z)], TileType::Water)
 		+ Vector4(0.3f, 1, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::LowGround)
 		+ Vector4(0.8f, 0.5f, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::HighGround);
 	Vector3 position = Vector3(x * 2 * TILESIZE, y, z  * 2 * TILESIZE);
@@ -700,6 +703,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	}
 	GameObject* cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
 	cube->SetLayer(2);
+	cube->SetTag(Tag::TileTag);
 	cube->SetStatic(true);
 }
 
@@ -732,7 +736,7 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	float size = 1.0f;
 	float inverseMass = 1.0f;
 
-	GameObject* goose = new GameObject("Goose");
+	GameObject* goose = new GooseObject("Goose", Tag::PlayerTag);
 
 	SphereVolume* volume = new SphereVolume(size);
 	goose->SetBoundingVolume((CollisionVolume*)volume);
@@ -745,18 +749,6 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	goose->GetPhysicsObject()->SetElasticity(0.0f);
 	goose->GetPhysicsObject()->SetInverseMass(inverseMass);
 	goose->GetPhysicsObject()->InitSphereInertia();
-
-	goose->SetUpdateFunc([](float dt, GameObject* g) {
-		//g->GetTransform().SetLocalOrientation(Quaternion(g->GetPhysicsObject()->GetLinearVelocity(), 3.14));
-		Vector3 force = g->GetTransform().GetUp().Normalised() - Vector3(0, 1, 0);
-		Vector3 torque = Vector3::Cross(Vector3(0, 1, 0), force);
-		//g->GetPhysicsObject()->AddForceAtLocalPosition(-torque * 100, Vector3(0,1,0));
-		//g->GetPhysicsObject()->AddForceAtLocalPosition(torque * 100, Vector3(0, -1, 0));
-		Debug::DrawLine(g->GetTransform().GetWorldPosition(), g->GetTransform().GetUp(), 10);
-		g->GetPhysicsObject()->AddTorque(-torque * 20);
-		//g->GetPhysicsObject()->AddForceAtLocalPosition(Vector3(0, 5, 0), Vector3(0, 10, 0));
-		//g->GetPhysicsObject()->AddForceAtLocalPosition(Vector3(0, -10, 0), Vector3(0, -10, 0));
-	});
 
 	world->AddGameObject(goose);
 
@@ -804,7 +796,7 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int
 	}
 	
 	GameObject* character = r > 0.5f ? (GameObject*)(new ChaserObject("Chaser")) : (GameObject*)(new WatcherObject("Watcher"));//new GameObject(r > 0.5f ? "Chaser" : "Watcher");
-
+	character->SetTag(HumanTag);
 	SphereVolume* volume = new SphereVolume(0.9f * meshSize);//new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
@@ -851,17 +843,17 @@ GameObject* NCL::CSC8503::TutorialGame::AddChaserToWorld(const Vector3& position
 }
 
 GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
-	GameObject* apple = new GameObject("Apple");
+	AppleObject* apple = new AppleObject("Apple", Tag::AppleTag);
 
 	SphereVolume* volume = new SphereVolume(0.7f);
 	apple->SetBoundingVolume((CollisionVolume*)volume);
 	apple->GetTransform().SetWorldScale(Vector3(4, 4, 4));
 	apple->GetTransform().SetWorldPosition(position);
-
+	apple->SetWorld(world);
 	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), appleMesh, nullptr, basicShader));
 	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
-
-	apple->GetPhysicsObject()->SetInverseMass(1.0f);
+	
+	apple->GetPhysicsObject()->SetInverseMass(5.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 
 	world->AddGameObject(apple);
@@ -875,6 +867,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddBallToWorld(const Vector3& position, 
 	if (freeBalls.empty())
 	{
 		ball = AddSphereToWorld(position, 1.0f, 1.0f / 2.0f);
+		ball->SetTag(BallTag);
 		ball->GetPhysicsObject()->SetFriction(0.2f);
 		ball->GetPhysicsObject()->SetElasticity(0.8f);
 		ball->SetUpdateFunc([&](float dt, GameObject* g) {

@@ -7,7 +7,7 @@ namespace NCL {
 			public HumanObject
 		{
 		public:
-			WatcherObject(string name = "", string tag = "");
+			WatcherObject(string name = "", Tag t = Tag::Null);
 
 			virtual void Update(float dt) override;
 

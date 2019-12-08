@@ -14,21 +14,27 @@ namespace NCL {
 			public GameObject
 		{
 		public:
-			HumanObject(string n, string t) : GameObject(n, t) { focusPlayer = nullptr; }
+			HumanObject(string n, Tag t = Tag::Null) : GameObject(n, t) { focusPlayer = nullptr; }
 
 			void UpdateDistance();
+
+			virtual void Update(float dt) override { if (stateMachine) stateMachine->Update(); }
 
 			static void SetPlayerIterator(GameObjectIterator& first, GameObjectIterator& last) 
 			{ 
 				firstPlayer = first; 
 				lastPlayer = last; 
 			}
-
 			static void SetPhysics(PhysicsSystem* p) { physics = p; }
 
+			void SetStateMachine(StateMachine* s) { stateMachine = s; }
+			StateMachine* GetStateMachine() const { return stateMachine; }
+
 		protected:
+			// TODO: GooseObjectIter
 			static GameObjectIterator firstPlayer;
 			static GameObjectIterator lastPlayer;
+			StateMachine* stateMachine;
 			float distance;
 			GameObject* focusPlayer;
 			static PhysicsSystem* physics;
