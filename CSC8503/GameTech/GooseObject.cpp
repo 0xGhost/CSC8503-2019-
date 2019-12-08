@@ -10,10 +10,10 @@ void NCL::CSC8503::GooseObject::Update(float dt)
 
 void NCL::CSC8503::GooseObject::OnCollisionBegin(GameObject* otherObject)
 {
-	if (apple && otherObject->GetTag() == HumanTag || otherObject->GetTag() == BallTag)
+	if (apple && (otherObject->GetTag() == HumanTag || otherObject->GetTag() == BallTag))
 	{
 		apple->RemoveConstraint();
-		LostApple();
+		apple = nullptr;
 	}
 }
 

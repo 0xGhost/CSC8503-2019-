@@ -1,5 +1,6 @@
 #include "WatcherObject.h"
 #include "../CSC8503Common/PhysicsSystem.h"
+#include "GooseObject.h"
 
 WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag) 
 {
@@ -36,7 +37,8 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
+			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag 
+				&& ((GooseObject*)closestCollision.node)->CheckApple())
 			{
 
 				

@@ -8,6 +8,7 @@ PhysicsObject::PhysicsObject(Transform* parentTransform, const CollisionVolume* 
 	transform	= parentTransform;
 	volume		= parentVolume;
 
+	isTrigger = false;
 	inverseMass = 1.0f;
 	elasticity	= 0.4f;
 	friction	= 0.95f;

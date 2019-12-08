@@ -3,12 +3,13 @@
 #include "../CSC8503Common/StateTransition.h"
 #include "..\CSC8503Common\GameWorld.h"
 #include "..\CSC8503Common\PhysicsSystem.h"
+#include "GooseObject.h"
 
 
 namespace NCL {
 	namespace CSC8503 {
 
-		//typedef std::vector<GameObject*>::const_iterator GameObjectIterator;
+		typedef std::vector<GooseObject*>::const_iterator PlayerIterator;
 
 		class HumanObject :
 			public GameObject
@@ -20,7 +21,7 @@ namespace NCL {
 
 			virtual void Update(float dt) override { if (stateMachine) stateMachine->Update(); }
 
-			static void SetPlayerIterator(GameObjectIterator& first, GameObjectIterator& last) 
+			static void SetPlayerIterator(PlayerIterator& first, PlayerIterator& last)
 			{ 
 				firstPlayer = first; 
 				lastPlayer = last; 
@@ -32,11 +33,11 @@ namespace NCL {
 
 		protected:
 			// TODO: GooseObjectIter
-			static GameObjectIterator firstPlayer;
-			static GameObjectIterator lastPlayer;
+			static PlayerIterator firstPlayer;
+			static PlayerIterator lastPlayer;
 			StateMachine* stateMachine;
 			float distance;
-			GameObject* focusPlayer;
+			GooseObject* focusPlayer;
 			static PhysicsSystem* physics;
 		};
 	}

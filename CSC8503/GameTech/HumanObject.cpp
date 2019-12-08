@@ -1,7 +1,7 @@
 #include "HumanObject.h"
 
-GameObjectIterator HumanObject::firstPlayer;
-GameObjectIterator HumanObject::lastPlayer;
+PlayerIterator HumanObject::firstPlayer;
+PlayerIterator HumanObject::lastPlayer;
 PhysicsSystem* HumanObject::physics;
 
 void NCL::CSC8503::HumanObject::UpdateDistance()
@@ -13,7 +13,7 @@ void NCL::CSC8503::HumanObject::UpdateDistance()
 		if (distance > tempDis)
 		{
 			distance = tempDis;
-			focusPlayer = *i;
+			focusPlayer = (GooseObject*)*i;
 		}
 	}
 }

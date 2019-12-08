@@ -3,6 +3,7 @@
 #include "../../Common/Assets.h"
 #include "../CSC8503Common/PhysicsSystem.h"
 #include "../CSC8503Common/NavigationGrid.h"
+#include "GooseObject.h"
 
 const int TILESIZE = 5;
 const float WATERY = -0.2f;
@@ -12,8 +13,6 @@ const float HIGHGROUNDY = 4;// -WATERY;
 
 namespace NCL {
 	namespace CSC8503 {
-
-
 
 		enum TileType
 		{
@@ -88,6 +87,7 @@ namespace NCL {
 			GameObject* AddChaserToWorld(const Vector3& position);
 			GameObject* AddAppleToWorld(const Vector3& position);
 			GameObject* AddBallToWorld(const Vector3& position, const Vector3& direction);
+			GameObject* AddBoxTriggerToWorld(const Vector3& position, Vector3 dimensions, Vector4 color = Vector4(1, 1, 1, 1));
 			void RemoveBall(GameObject* o);
 
 			GameTechRenderer*	renderer;
@@ -135,7 +135,7 @@ namespace NCL {
 			};
 			Vector3 lightPos;
 
-			vector<GameObject*> players;
+			vector<GooseObject*> players;
 			vector<GameObject*> freeBalls;
 			NavigationMap* navMap;
 			//Coursework Additional functionality	

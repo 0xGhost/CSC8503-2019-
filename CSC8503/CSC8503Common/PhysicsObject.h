@@ -85,6 +85,9 @@ namespace NCL {
 				return inverseInteriaTensor;
 			}
 
+			bool IsTrigger() { return isTrigger; }
+			void SetTrigger(bool t) { isTrigger = t; }
+
 		protected:
 			const CollisionVolume* volume;
 			Transform*		transform;
@@ -92,6 +95,7 @@ namespace NCL {
 			float inverseMass;
 			float elasticity;
 			float friction;
+			bool isTrigger;
 
 			//linear stuff
 			Vector3 linearVelocity;

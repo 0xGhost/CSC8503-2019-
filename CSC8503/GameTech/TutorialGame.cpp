@@ -96,7 +96,7 @@ void TutorialGame::InitialiseAssets() {
 	loadFunc("sphere.msh", &sphereMesh);
 	loadFunc("CenteredGoose.msh", &gooseMesh);
 	loadFunc("CharacterA.msh", &keeperMesh);
-	loadFunc("CharacterM.msh", &charA);
+	loadFunc("RotatedCharacterM.msh", &charA);
 	loadFunc("CharacterF.msh", &charB);
 	loadFunc("Apple.msh", &appleMesh);
 
@@ -124,8 +124,6 @@ TutorialGame::~TutorialGame() {
 void TutorialGame::UpdateGame(float dt) {
 	//TODO: menu
 
-	
-
 	this->dt = dt;
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
@@ -149,7 +147,9 @@ void TutorialGame::UpdateGame(float dt) {
 	Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
 		" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
 		Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
-
+	Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
+		
+		Vector2(720, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 	SelectObject();
 	if (isEditMode)
@@ -400,7 +400,7 @@ bool TutorialGame::SelectObject() {
 			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
 			Debug::DrawLine(ray.GetPosition(), (ray.GetDirection() * 5000 + ray.GetPosition()));
 			RayCollision closestCollision;
-			if (physics->Raycast(ray, closestCollision, true)) {
+			if (physics->Raycast(ray, closestCollision, true, ~(1 << 6))) {
 				selectionObject = (GameObject*)closestCollision.node;
 				selectionColor = selectionObject->GetRenderObject()->GetColour();
 				selectionObject->GetRenderObject()->SetColour(Vector4(1, 0.2f, 0.2f, 1));
@@ -678,7 +678,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 {
 	float y = check(mapTiles[IndexOf(x, z)], TileType::Water) * WATERY
 		+ check(mapTiles[IndexOf(x, z)], TileType::HighGround) * HIGHGROUNDY;
-	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 0.1f) * check(mapTiles[IndexOf(x, z)], TileType::Water)
+	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 0.6f) * check(mapTiles[IndexOf(x, z)], TileType::Water)
 		+ Vector4(0.3f, 1, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::LowGround)
 		+ Vector4(0.8f, 0.5f, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::HighGround);
 	Vector3 position = Vector3(x * 2 * TILESIZE, y, z  * 2 * TILESIZE);
@@ -692,6 +692,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	if (mapTiles[IndexOf(x, z)] == TileType::Goose)
 	{
 		onTile = AddGooseToWorld(position + Vector3(0, 8 + y, 0));
+		AddBoxTriggerToWorld(position + Vector3(0, 10 + y, 0), Vector3(TILESIZE, TILESIZE, TILESIZE), Vector4(0.8f,0.2f,0.2f,1));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Chaser)
 	{
@@ -736,7 +737,7 @@ GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
 	float size = 1.0f;
 	float inverseMass = 1.0f;
 
-	GameObject* goose = new GooseObject("Goose", Tag::PlayerTag);
+	GooseObject* goose = new GooseObject("Goose", Tag::PlayerTag);
 
 	SphereVolume* volume = new SphereVolume(size);
 	goose->SetBoundingVolume((CollisionVolume*)volume);
@@ -849,6 +850,7 @@ GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
 	apple->SetBoundingVolume((CollisionVolume*)volume);
 	apple->GetTransform().SetWorldScale(Vector3(4, 4, 4));
 	apple->GetTransform().SetWorldPosition(position);
+	apple->SetOriginalPosition(position);
 	apple->SetWorld(world);
 	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), appleMesh, nullptr, basicShader));
 	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
@@ -890,6 +892,32 @@ GameObject* NCL::CSC8503::TutorialGame::AddBallToWorld(const Vector3& position, 
 	ball->SetLayer(4);
 	ball->GetPhysicsObject()->ApplyLinearImpulse(direction * 100);//AddForce(direction * 3000);// ->AddForce(-direction * 5000);
 	return ball;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddBoxTriggerToWorld(const Vector3& position, Vector3 dimensions, Vector4 color)
+{
+	GameObject* box = new GameObject("BoxTrigger", HomeTag);
+
+	AABBVolume* volume = new AABBVolume(dimensions);
+
+	box->SetBoundingVolume((CollisionVolume*)volume);
+	box->SetLayer(6); // raycast ignore
+	
+	box->GetTransform().SetWorldPosition(position);
+	box->GetTransform().SetWorldScale(dimensions);
+
+	//box->SetRenderObject(new RenderObject(&box->GetTransform(), nullptr, nullptr/*basicTex*/, basicShader));
+	box->SetPhysicsObject(new PhysicsObject(&box->GetTransform(), box->GetBoundingVolume()));
+	box->GetPhysicsObject()->SetTrigger(true);
+	box->GetPhysicsObject()->SetInverseMass(0);
+	//box->GetRenderObject()->SetColour(color);
+
+	box->SetUpdateFunc([&](float dt, GameObject* g) {
+		Debug::DrawCube(g->GetTransform().GetWorldPosition(), g->GetTransform().GetLocalScale(), Vector4(1.0f, 0.3f, 0.3f, 1));
+		});
+	world->AddGameObject(box);
+
+	return box;
 }
 
 void NCL::CSC8503::TutorialGame::RemoveBall(GameObject* o)

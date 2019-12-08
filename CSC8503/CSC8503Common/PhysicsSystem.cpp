@@ -378,7 +378,8 @@ void PhysicsSystem::NarrowPhase() {
 		if (CheckLayerCollision(info.a->GetLayer(), info.b->GetLayer())
 			&& CollisionDetection::ObjectIntersection(info.a, info.b, info)) {
 			info.framesLeft = numCollisionFrames;
-			ImpulseResolveCollision(*info.a, *info.b, info.point);
+			if(!info.a->GetPhysicsObject()->IsTrigger() && !info.b->GetPhysicsObject()->IsTrigger())
+				ImpulseResolveCollision(*info.a, *info.b, info.point);
 			allCollisions.insert(info); // insert into our main set
 		}
 	}

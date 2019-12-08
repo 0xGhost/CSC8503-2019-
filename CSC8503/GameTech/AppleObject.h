@@ -14,11 +14,13 @@ namespace NCL {
 			virtual void OnCollisionBegin(GameObject* otherObject) override;
 			//void AddConstraintWithGoose(GooseObec )
 			void RemoveConstraint();
+			void SetOriginalPosition(Vector3 p) { originalPosition = p; }
 			void SetWorld(GameWorld* w) { world = w; }
 		protected:
 			PositionConstraint* constraint;
 			GooseObject* goose;
 			GameWorld* world;
+			Vector3 originalPosition;
 		};
 	}
 }

@@ -1,5 +1,6 @@
 #include "ChaserObject.h"
 #include "../CSC8503Common/PhysicsSystem.h"
+#include "GooseObject.h"
 
 ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 {
@@ -26,7 +27,8 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 			if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 			{
-				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
+				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
+					&& ((GooseObject*)closestCollision.node)->CheckApple())
 				{
 					*state = 1;
 				}
@@ -59,7 +61,8 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
+			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
+				&& ((GooseObject*)closestCollision.node)->CheckApple())
 			{
 				*state = 1;
 				return;
@@ -99,7 +102,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 		float distance = (watcherPos - playerPos).Length();
-		if (distance > searchDistance)
+		if (distance > searchDistance || !focusPlayer->CheckApple())
 		{
 			*state = 3;
 			return;
@@ -114,7 +117,8 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag)
+			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
+				&& ((GooseObject*)closestCollision.node)->CheckApple())
 			{
 				*state = 1;
 			}
@@ -163,7 +167,8 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
 		{
-			if (((GameObject*)closestCollision.node)->GetTag() != PlayerTag)
+			if (((GameObject*)closestCollision.node)->GetTag() != PlayerTag
+				|| !((GooseObject*)closestCollision.node)->CheckApple())
 			{
 				*state = 2;
 			}

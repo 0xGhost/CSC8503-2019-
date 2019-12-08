@@ -36,6 +36,9 @@ GameTechRenderer::GameTechRenderer(GameWorld& world) : OGLRenderer(*Window::GetW
 
 	glClearColor(1, 1, 1, 1);
 
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glad_glBlendFunc(one)
 	//Set up the light properties
 	lightColour = Vector4(1, 1, 1, 1.0f);
 	lightRadius = 1000.0f;
