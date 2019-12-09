@@ -94,16 +94,17 @@ void TestNetworking() {
 
 	bool canConnect = client->Connect(127, 0, 0, 1, port);
 	bool canConnect2 = client2->Connect(127, 0, 0, 1, port);
-
+	server->UpdateServer();
+	client->UpdateClient();
+	client2->UpdateClient();
 	for (int i = 0; i < 100; ++i) {
-		server->SendGlobalPacket(
-			StringPacket("Server says hello !" + std::to_string(i)));
-
+		//server->SendGlobalPacket(StringPacket("Server says hello !" + std::to_string(i)));
 		client->SendPacket(
 			StringPacket("Client says hello !" + std::to_string(i)));
 
 		client2->SendPacket(
 			StringPacket("Client2 says hello !" + std::to_string(i)));
+		server->SendPacketToPeer(i % 2, StringPacket("Server says hello !" + std::to_string(i)));
 
 		server->UpdateServer();
 		client->UpdateClient();

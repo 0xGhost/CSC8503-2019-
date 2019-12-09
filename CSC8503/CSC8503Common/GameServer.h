@@ -1,6 +1,8 @@
 #pragma once
 #include <thread>
 #include <atomic>
+#include <list>
+#include <vector>
 
 #include "NetworkBase.h"
 
@@ -21,8 +23,8 @@ namespace NCL {
 
 			bool SendGlobalPacket(int msgID);
 			bool SendGlobalPacket(GamePacket& packet);
-			bool SendPacketToPeer(int msgID);
-			bool SendPacketToPeer(GamePacket& packet);
+			bool SendPacketToPeer(int peer, int msgID);
+			bool SendPacketToPeer(int peer, GamePacket& packet);
 
 			virtual void UpdateServer();
 
@@ -32,6 +34,7 @@ namespace NCL {
 			int			clientCount;
 			GameWorld*	gameWorld;
 
+			std::vector<ENetPeer*> clients;
 			//std::atomic<bool> threadAlive;
 
 			
