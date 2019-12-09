@@ -15,7 +15,7 @@ void NCL::CSC8503::AppleObject::OnCollisionBegin(GameObject* otherObject)
 			world->AddConstraint(constraint);
 		}
 	}
-	else if(goose && otherObject->GetTag() == HumanTag || otherObject->GetTag() == BallTag)
+	else if (goose && (otherObject->GetTag() == HumanTag || otherObject->GetTag() == BallTag))
 	{
 		RemoveConstraint();
 		goose->LostApple();
@@ -25,6 +25,7 @@ void NCL::CSC8503::AppleObject::OnCollisionBegin(GameObject* otherObject)
 	{
 		RemoveConstraint();
 		goose->BackHomeWithApple();
+		goose = nullptr;
 		transform.SetWorldPosition(originalPosition);
 		physicsObject->ClearForces();
 		physicsObject->SetLinearVelocity(Vector3(0, 0, 0));

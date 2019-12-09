@@ -59,6 +59,11 @@ bool GameServer::SendGlobalPacket(GamePacket& packet) {
 	return true;
 }
 
+bool NCL::CSC8503::GameServer::SendPacketToPeer( GamePacket& packet)
+{
+	return false;
+}
+
 void GameServer::UpdateServer() {
 	if (!netHandle) {
 		return;

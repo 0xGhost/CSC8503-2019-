@@ -148,8 +148,7 @@ void TutorialGame::UpdateGame(float dt) {
 		" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
 		Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 	Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
-		
-		Vector2(720, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+		Vector2(800, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 	SelectObject();
 	if (isEditMode)
@@ -853,6 +852,7 @@ GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
 	apple->SetOriginalPosition(position);
 	apple->SetWorld(world);
 	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), appleMesh, nullptr, basicShader));
+	apple->GetRenderObject()->SetColour(Vector4(1.0f, 0.3f, 0.3f, 1));
 	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
 	
 	apple->GetPhysicsObject()->SetInverseMass(5.0f);
