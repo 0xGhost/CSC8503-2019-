@@ -16,7 +16,7 @@ namespace NCL {
 		{
 		public:
 			HumanObject(string n, Tag t = Tag::Null) : GameObject(n, t) { focusPlayer = nullptr; }
-
+			~HumanObject() { delete stateMachine; }
 			void UpdateDistance();
 
 			virtual void Update(float dt) override { if (stateMachine) stateMachine->Update(); }

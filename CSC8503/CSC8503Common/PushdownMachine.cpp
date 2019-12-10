@@ -14,10 +14,10 @@ PushdownMachine::~PushdownMachine()
 void PushdownMachine::Update() {
 	if (activeState) {
 		PushdownState* newState = nullptr;
-		PushdownState::PushdownResult result = activeState->PushdownUpdate(&newState);
+		PushdownResult result = activeState->PushdownUpdate(&newState);
 
 		switch (result) {
-			case PushdownState::Pop: {
+			case Pop: {
 				activeState->OnSleep();
 				stateStack.pop();
 				if (stateStack.empty()) {
@@ -28,7 +28,7 @@ void PushdownMachine::Update() {
 					activeState->OnAwake();
 				}
 			}break;
-			case PushdownState::Push: {
+			case Push: {
 				activeState->OnSleep();
 				stateStack.push(newState);
 				newState->OnAwake();

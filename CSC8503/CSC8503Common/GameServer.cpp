@@ -67,8 +67,9 @@ bool NCL::CSC8503::GameServer::SendPacketToPeer(int peer, int msgID)
 
 bool NCL::CSC8503::GameServer::SendPacketToPeer(int peer, GamePacket& packet)
 {
+	if (peer >= clients.size()) return false;
 	ENetPacket* dataPacket = enet_packet_create(&packet, packet.GetTotalSize(), 0);
-	enet_peer_send(netHandle->peers + peer, 0, dataPacket);
+	enet_peer_send(clients[peer], 0, dataPacket);
 	return true;
 }
 

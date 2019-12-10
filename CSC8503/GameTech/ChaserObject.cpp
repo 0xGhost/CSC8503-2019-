@@ -8,7 +8,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 	detectionDistance = 30;
 	stateMachine = new StateMachine();
 	state = 0;
-
+	// TODO: superState that contain a stateMachine
 	StateFunc idleFunc = [&](void* data)
 	{
 		int* state = (int*)data;

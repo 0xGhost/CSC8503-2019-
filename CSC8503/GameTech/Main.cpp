@@ -178,7 +178,7 @@ int main() {
 
 	TutorialGame* g = new TutorialGame();
 	//w->GetScreenSize();
-
+	w->GetTimer()->GetTimeDeltaSeconds();
 	while (w->UpdateWindow() && !Window::GetKeyboard()->KeyDown(KeyboardKeys::ESCAPE)) {
 		float dt = w->GetTimer()->GetTimeDeltaSeconds();
 

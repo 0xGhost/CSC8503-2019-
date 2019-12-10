@@ -11,7 +11,14 @@ StateMachine::StateMachine()
 
 StateMachine::~StateMachine()
 {
-
+	for (State* s : allStates)
+	{
+		delete s;
+	}
+	for (std::pair< State*, StateTransition*> t : allTransitions)
+	{
+		delete t.second;
+	}
 }
 
 void StateMachine::AddState(State* s) 

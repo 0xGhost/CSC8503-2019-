@@ -123,6 +123,10 @@ TutorialGame::~TutorialGame() {
 
 void TutorialGame::UpdateGame(float dt) {
 	//TODO: menu
+	if (true)
+	{
+		// Update Menu
+	}
 
 	this->dt = dt;
 	if (!inSelectionMode) {
@@ -587,6 +591,7 @@ void TutorialGame::InitWorld() {
 #pragma endregion
 	worldOffset = Vector3(-mapSize.x * TILESIZE + TILESIZE, 0, -mapSize.y * TILESIZE + TILESIZE);
 	//int* mapTemp = mapTiles;
+	players.clear();
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for (int z = 0; z < mapSize.y; z++)
@@ -601,8 +606,8 @@ void TutorialGame::InitWorld() {
 	HumanObject::SetPhysics(physics);
 	HumanObject::SetPlayerIterator(players.begin(), players.end());
 	physics->InitQuadTree();
-	//useGravity = true;
-	//physics->UseGravity(true);
+	useGravity = true;
+	physics->UseGravity(true);
 #else
 	BridgeConstraintTest();
 	//InitMixedGridWorld(10, 10, 6.0f, 6.0f);
