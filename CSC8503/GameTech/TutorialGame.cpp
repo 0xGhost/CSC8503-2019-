@@ -4,13 +4,16 @@
 #include "../../Plugins/OpenGLRendering/OGLShader.h"
 #include "../../Plugins/OpenGLRendering/OGLTexture.h"
 #include "../../Common/TextureLoader.h"
-#include <fstream>
-#include <stdexcept>
+
 #include "WatcherObject.h"
 #include "ChaserObject.h"
 #include "GooseObject.h"
 #include "AppleObject.h"
 #include "../CSC8503Common/PositionConstraint.h"
+#include "../CSC8503Common/PushdownState.h"
+
+#include <fstream>
+#include <stdexcept>
 
 #define check(a, b) ((a) & (b) ? 1 : 0)
 
@@ -25,6 +28,8 @@ TutorialGame::TutorialGame() {
 	physics->InitLayerCollisionMatrix(true);
 
 	forceMagnitude = 100.0f;
+	isPlaying = false;
+	isDebuging = false;
 	useGravity = false;
 	inSelectionMode = false;
 	mapSize = Vector2(10, 10);
@@ -33,6 +38,26 @@ TutorialGame::TutorialGame() {
 	Debug::SetRenderer(renderer);
 
 	InitialiseAssets();
+	InitMenuMachine();
+}
+
+TutorialGame::~TutorialGame() {
+	delete cubeMesh;
+	delete sphereMesh;
+	delete gooseMesh;
+	delete basicTex;
+	delete basicShader;
+
+	delete navMap;
+	delete mapTiles;
+	delete physics;
+	delete renderer;
+	delete world;
+
+	delete mainMenu;
+	delete inGameState;
+	delete pauseState;
+
 }
 
 void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (invalid_argument)
@@ -53,7 +78,7 @@ void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (inva
 			fileInput >> type;
 			if (type >= TileType::Invaild)
 				throw invalid_argument("File contain invalid data: " + type);
-			mapTiles[IndexOf(x,z)] = type;
+			mapTiles[IndexOf(x, z)] = type;
 		}
 	}
 
@@ -76,6 +101,40 @@ void NCL::CSC8503::TutorialGame::SaveMapData(const string& fileName) throw (inva
 		fileOutput << "\n";
 	}
 	fileOutput.close();
+}
+
+void NCL::CSC8503::TutorialGame::LoadMap()
+{
+	cout << "Enter the map name to load: ";
+	string fileName;
+	cin >> fileName;
+	try
+	{
+		LoadMapData(fileName);
+		InitWorld();
+		selectionObject = nullptr;
+		std::cout << "Map load successful." << endl;
+	}
+	catch (const invalid_argument& iae)
+	{
+		std::cout << "Unable to read data : " << iae.what() << "\n";
+	}
+}
+
+void NCL::CSC8503::TutorialGame::SaveMap()
+{
+	cout << "Enter the map name to save: ";
+	string fileName;
+	cin >> fileName;
+	try
+	{
+		SaveMapData(fileName);
+		std::cout << "Map save successful." << endl;
+	}
+	catch (const invalid_argument& iae)
+	{
+		std::cout << "Unable to write data : " << iae.what() << "\n";
+	}
 }
 
 /*
@@ -104,67 +163,117 @@ void TutorialGame::InitialiseAssets() {
 	basicShader = new OGLShader("GameTechVert.glsl", "GameTechFrag.glsl");
 
 	InitCamera();
-	InitWorld();
+	//InitWorld();
 }
 
-TutorialGame::~TutorialGame() {
-	delete cubeMesh;
-	delete sphereMesh;
-	delete gooseMesh;
-	delete basicTex;
-	delete basicShader;
+void NCL::CSC8503::TutorialGame::InitMenuMachine()
+{
+	mainMenu = new PushdownState([&](PushdownState** pushResult)
+		{
+			int i = 1;
+			int offset = 40;
+			Debug::Print("F1 to start a single-player game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("F2 to start a multi-player game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("F3 to enter edit and debug mode", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
+			{
+				LoadMap();
+				InitWorld();
+				//isPlaying = true;
+				*pushResult = inGameState;
+				//pushResult = &selectMapMenu;
+				return Push;
+			}
+			// TODO: F2 -> mutli-player game
 
-	delete navMap;
-	delete mapTiles;
-	delete physics;
-	delete renderer;
-	delete world;
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3))
+			{
+				InitWorld();
+				selectionObject = nullptr;
+				//isDebuging = true;
+				*pushResult = editMenu;
+				return Push;
+			}
+			return NoChange;
+		});
+	mainMenu->SetAwakeFunc([&]()
+		{
+			world->ClearAndErase();
+			physics->Clear();
+		});
+
+	inGameState = new PushdownState([&](PushdownState** pushResult)
+		{
+			Debug::Print("time:" + std::to_string((int)timeLeft),
+				Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
+				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+			GooseCameraMovement();
+			GooseMovement();
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+			{
+				return Pop;
+			}
+			return NoChange;
+		});
+
+
+	gameStateManager.InitState(mainMenu);
 }
 
 void TutorialGame::UpdateGame(float dt) {
-	//TODO: menu
-	if (true)
-	{
-		// Update Menu
-	}
 
 	this->dt = dt;
-	if (!inSelectionMode) {
-		world->GetMainCamera()->UpdateCamera(dt);
-	}
-	if (lockedObject != nullptr) {
-		LockedCameraMovement();
-	}
+	gameStateManager.Update();
 
-	UpdateKeys();
 
-	if (useGravity) {
-		Debug::Print("(G)ravity on", Vector2(10, 40));
+	if (isPlaying)
+	{
+		GooseCameraMovement();
+		GooseMovement();
 	}
-	else {
-		Debug::Print("(G)ravity off", Vector2(10, 40));
+	else if (isDebuging)
+	{
+		if (!inSelectionMode) {
+			world->GetMainCamera()->UpdateCamera(dt);
+		}
+		if (lockedObject != nullptr) {
+			LockedCameraMovement();
+		}
+
+		UpdateKeys();
+
+		if (useGravity) {
+			Debug::Print("(G)ravity on", Vector2(10, 40));
+		}
+		else {
+			Debug::Print("(G)ravity off", Vector2(10, 40));
+		}
+		Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
+			" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
+			" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
+			Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+		Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
+			" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
+			Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+		Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
+			Vector2(800, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+		SelectObject();
+		if (isEditMode)
+			EditSelectedObject();
+		else
+			MoveSelectedObject();
 	}
-	Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
-		" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
-		" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
-		Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
-	Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
-		" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
-		Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
-	Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
-		Vector2(800, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
-
-	SelectObject();
-	if (isEditMode)
-		EditSelectedObject();
-	else
-		MoveSelectedObject();
-
 	world->UpdateWorld(dt);
-	
+
 	renderer->Update(dt);
 	physics->Update(dt);
-	
+
 
 	Debug::FlushRenderables();
 	renderer->Render();
@@ -315,6 +424,57 @@ void  TutorialGame::LockedCameraMovement() {
 		world->GetMainCamera()->SetPitch(angles.x);
 		world->GetMainCamera()->SetYaw(angles.y);
 	}
+}
+
+void NCL::CSC8503::TutorialGame::GooseCameraMovement()
+{
+	Vector3 objPos = goose->GetTransform().GetWorldPosition();
+	Vector3 camPos = objPos + lockedOffset;
+
+	Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0, 1, 0));
+
+	Matrix4 modelMat = temp.Inverse();
+
+	Quaternion q(modelMat);
+	Vector3 angles = q.ToEuler(); //nearly there now!
+
+	world->GetMainCamera()->SetPosition(camPos);
+	world->GetMainCamera()->SetPitch(angles.x);
+	world->GetMainCamera()->SetYaw(angles.y);
+}
+
+void NCL::CSC8503::TutorialGame::GooseMovement()
+{
+	Matrix4 view = world->GetMainCamera()->BuildViewMatrix();
+	Matrix4 camWorld = view.Inverse();
+
+	Vector3 rightAxis = Vector3(camWorld.GetColumn(0)); //view is inverse of model!
+
+	//forward is more tricky -  camera forward is 'into' the screen...
+	//so we can take a guess, and use the cross of straight up, and
+	//the right axis, to hopefully get a vector that's good enough!
+
+	Vector3 fwdAxis = Vector3::Cross(Vector3(0, 1, 0), rightAxis);
+	float f = 100;
+	Vector3 front = -goose->GetTransform().GetForward() * 0.1;
+	Vector3 finalDir;
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
+		finalDir += -rightAxis;
+	}
+
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::RIGHT)) {
+		finalDir += rightAxis;
+	}
+
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::UP)) {
+		finalDir += fwdAxis;
+	}
+
+	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::DOWN)) {
+		finalDir += -fwdAxis;
+	}
+	goose->GetPhysicsObject()->AddForceAtLocalPosition(finalDir.Normalised() * f, front);
+
 }
 
 
@@ -576,7 +736,7 @@ void TutorialGame::InitWorld() {
 	physics->SetWorldSize(Vector3(mapSize.x * TILESIZE, 20, mapSize.y * TILESIZE));
 	lightPos = Vector3(-200.0f, 160.0f, -200.0f);
 	renderer->SetLightPosition(lightPos);
-	
+
 
 #pragma region ShadowProjMat
 
@@ -586,7 +746,7 @@ void TutorialGame::InitWorld() {
 	float topdownD = abs(lightPos.y / lightPos.Length() * (d + abs(lightv2.Length() / lightPos.y * (TILESIZE + HIGHGROUNDY) * 2)));
 	float nearfarD = lightPos.y / lightPos.Length() * d;
 
-	renderer->SetShadowProjMatrix(Matrix4::Orthographic(lightPos.Length() - nearfarD*2, lightPos.Length() + nearfarD*2, d + 1, -d - 1, topdownD, -topdownD));
+	renderer->SetShadowProjMatrix(Matrix4::Orthographic(lightPos.Length() - nearfarD * 2, lightPos.Length() + nearfarD * 2, d + 1, -d - 1, topdownD, -topdownD));
 	//renderer->SetShadowProjMatrix(Matrix4::Perspective(20, 500, 1, 70));
 #pragma endregion
 	worldOffset = Vector3(-mapSize.x * TILESIZE + TILESIZE, 0, -mapSize.y * TILESIZE + TILESIZE);
@@ -602,9 +762,11 @@ void TutorialGame::InitWorld() {
 		}
 	}
 	navMap = new NavigationGrid(TILESIZE * 2, mapSize.x, mapSize.y, mapTiles);
-	
+
 	HumanObject::SetPhysics(physics);
 	HumanObject::SetPlayerIterator(players.begin(), players.end());
+	if (players.size() > 0)
+		goose = players[0];
 	physics->InitQuadTree();
 	useGravity = true;
 	physics->UseGravity(true);
@@ -685,7 +847,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	Vector4 cubeColor = Vector4(0.2f, 0.2f, 0.9f, 0.6f) * check(mapTiles[IndexOf(x, z)], TileType::Water)
 		+ Vector4(0.3f, 1, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::LowGround)
 		+ Vector4(0.8f, 0.5f, 0.3f, 1) * check(mapTiles[IndexOf(x, z)], TileType::HighGround);
-	Vector3 position = Vector3(x * 2 * TILESIZE, y, z  * 2 * TILESIZE);
+	Vector3 position = Vector3(x * 2 * TILESIZE, y, z * 2 * TILESIZE);
 	position += worldOffset;
 	Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
 	GameObject* onTile;
@@ -696,7 +858,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	if (mapTiles[IndexOf(x, z)] == TileType::Goose)
 	{
 		onTile = AddGooseToWorld(position + Vector3(0, 8 + y, 0));
-		AddBoxTriggerToWorld(position + Vector3(0, 10 + y, 0), Vector3(TILESIZE, TILESIZE, TILESIZE), Vector4(0.8f,0.2f,0.2f,1));
+		AddBoxTriggerToWorld(position + Vector3(0, 10 + y, 0), Vector3(TILESIZE, TILESIZE, TILESIZE), Vector4(0.8f, 0.2f, 0.2f, 1));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Chaser)
 	{
@@ -799,7 +961,7 @@ GameObject* TutorialGame::AddCharacterToWorld(const Vector3& position, const int
 		maxVal.y = max(maxVal.y, i.y);
 		minVal.y = min(minVal.y, i.y);
 	}
-	
+
 	GameObject* character = r > 0.5f ? (GameObject*)(new ChaserObject("Chaser")) : (GameObject*)(new WatcherObject("Watcher"));//new GameObject(r > 0.5f ? "Chaser" : "Watcher");
 	character->SetTag(HumanTag);
 	SphereVolume* volume = new SphereVolume(0.9f * meshSize);//new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
@@ -823,8 +985,8 @@ GameObject* NCL::CSC8503::TutorialGame::AddWatcherToWorld(const Vector3& positio
 {
 	WatcherObject* watcher = (WatcherObject*)AddCharacterToWorld(position, 0);
 	watcher->SetWatcherFunc([&](Vector3 direction, GameObject* g) {
-		AddBallToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f + Vector3(0,5,0), direction);
-	});
+		AddBallToWorld(g->GetTransform().GetWorldPosition() + direction * 4.0f + Vector3(0, 5, 0), direction);
+		});
 	watcher->SetLayer(3);
 	return watcher;
 }
@@ -842,8 +1004,8 @@ GameObject* NCL::CSC8503::TutorialGame::AddChaserToWorld(const Vector3& position
 		destination -= worldOffset;
 		int dx = (destination.x / (TILESIZE * 2) + 0.5);
 		int dy = (destination.z / (TILESIZE * 2) + 0.5);
-		navMap->FindPath(y,x, dy,dx, g->path);
-	});
+		navMap->FindPath(y, x, dy, dx, g->path);
+		});
 	return chaser;
 }
 
@@ -859,7 +1021,7 @@ GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
 	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), appleMesh, nullptr, basicShader));
 	apple->GetRenderObject()->SetColour(Vector4(1.0f, 0.3f, 0.3f, 1));
 	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
-	
+
 	apple->GetPhysicsObject()->SetInverseMass(5.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 
@@ -907,7 +1069,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddBoxTriggerToWorld(const Vector3& posi
 
 	box->SetBoundingVolume((CollisionVolume*)volume);
 	box->SetLayer(6); // raycast ignore
-	
+
 	box->GetTransform().SetWorldPosition(position);
 	box->GetTransform().SetWorldScale(dimensions);
 

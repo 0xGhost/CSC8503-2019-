@@ -4,6 +4,7 @@
 #include "../CSC8503Common/PhysicsSystem.h"
 #include "../CSC8503Common/NavigationGrid.h"
 #include "GooseObject.h"
+#include "..//CSC8503Common/PushdownMachine.h"
 
 const int TILESIZE = 5;
 const float WATERY = -0.2f;
@@ -48,9 +49,12 @@ namespace NCL {
 		protected:
 			void LoadMapData(const string& fileName);
 			void SaveMapData(const string& fileName);
+			void LoadMap();
+			void SaveMap();
 			int IndexOf(int x, int y) { return x * mapSize.y + y; }
 
 			void InitialiseAssets();
+			void InitMenuMachine();
 
 			void InitCamera();
 			void UpdateKeys();
@@ -75,6 +79,9 @@ namespace NCL {
 			void LockedObjectMovement();
 			void LockedCameraMovement();
 
+			void GooseCameraMovement();
+			void GooseMovement();
+
 			GameObject* AddFloorToWorld(const Vector3& position);
 			GameObject* AddSphereToWorld(const Vector3& position, float radius, float inverseMass = 10.0f, bool isHollow = false);
 			void AddTileToWorld(int x, int z);
@@ -98,6 +105,7 @@ namespace NCL {
 			bool inSelectionMode;
 			bool isEditMode;
 			bool isPlaying;
+			bool isDebuging;
 
 			float		forceMagnitude;
 
@@ -117,6 +125,8 @@ namespace NCL {
 			OGLMesh*	charB		= nullptr;
 
 			float dt;
+			float totalTime;
+			float timeLeft;
 			Vector2 mapSize;
 			int* mapTiles;
 			int mapData[100] = 
@@ -135,9 +145,18 @@ namespace NCL {
 			};
 			Vector3 lightPos;
 
+			GooseObject* goose;
 			vector<GooseObject*> players;
 			vector<GameObject*> freeBalls;
 			NavigationMap* navMap;
+			
+			PushdownMachine gameStateManager;
+			PushdownState* mainMenu;
+			PushdownState* selectMapMenu;
+			PushdownState* editMenu;
+			PushdownState* inGameState;
+			PushdownState* pauseState;
+
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;
 			Vector3 lockedOffset = Vector3(0, 100, -20);//Vector3(0, 14, 20);

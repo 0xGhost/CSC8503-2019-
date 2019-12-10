@@ -8,7 +8,9 @@ namespace NCL {
 		};
 		class PushdownState;
 		typedef std::function<PushdownResult(PushdownState**)> PDStateFunc;
-		class PushdownState //:public State
+		typedef std::function<void(void)> PDAwakeFunc;
+		typedef std::function<void(void)> PDSleepFunc;
+		class PushdownState 
 		{
 		public:
 
@@ -16,12 +18,17 @@ namespace NCL {
 			~PushdownState();
 			
 			PushdownResult PushdownUpdate(PushdownState** pushResult);
+			void SetStateFunc(PDStateFunc f) { func = f; }
+			void SetAwakeFunc(PDAwakeFunc func) { awakeFunc = func; }
+			void SetSleepFunc(PDSleepFunc func) { sleepFunc = func; }
 
-			virtual void OnAwake() { ; } //By default do nothing
-			virtual void OnSleep() { ; } //By default do nothing
+			virtual void OnAwake() { awakeFunc(); } 
+			virtual void OnSleep() { sleepFunc(); } 
 		protected:
+			PushdownState();
 			PDStateFunc func;
-			void* funcData;
+			PDAwakeFunc awakeFunc;
+			PDSleepFunc sleepFunc;
 		};
 	}
 }

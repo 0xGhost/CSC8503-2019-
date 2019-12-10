@@ -11,7 +11,7 @@ namespace NCL {
 			~Menu();
 
 			void MenuUpdate(float dt) { machine.Update(); }
-
+			//void AddMenu()
 
 		protected:
 			PushdownMachine machine;

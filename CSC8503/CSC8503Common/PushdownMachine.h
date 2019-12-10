@@ -10,7 +10,7 @@ namespace NCL {
 		public:
 			PushdownMachine();
 			~PushdownMachine();
-
+			void InitState(PushdownState* init);
 			void Update();
 
 		protected:

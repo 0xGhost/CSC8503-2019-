@@ -11,6 +11,12 @@ PushdownMachine::~PushdownMachine()
 {
 }
 
+void NCL::CSC8503::PushdownMachine::InitState(PushdownState* init)
+{
+	activeState = init;
+	stateStack.push(init);
+}
+
 void PushdownMachine::Update() {
 	if (activeState) {
 		PushdownState* newState = nullptr;
@@ -32,6 +38,7 @@ void PushdownMachine::Update() {
 				activeState->OnSleep();
 				stateStack.push(newState);
 				newState->OnAwake();
+				activeState = newState; // rich forgot this
 			}break;
 		}
 	}
