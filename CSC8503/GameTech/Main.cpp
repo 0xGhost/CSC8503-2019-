@@ -170,7 +170,7 @@ int main() {
 	}
 
 	//TestStateMachine();
-	TestNetworking();
+	//TestNetworking();
 	//TestPathfinding();
 
 	w->ShowOSPointer(false);

@@ -22,8 +22,9 @@ namespace NCL {
 			void SetAwakeFunc(PDAwakeFunc func) { awakeFunc = func; }
 			void SetSleepFunc(PDSleepFunc func) { sleepFunc = func; }
 
+			virtual void OnSleep() { sleepFunc(); }
 			virtual void OnAwake() { awakeFunc(); } 
-			virtual void OnSleep() { sleepFunc(); } 
+			
 		protected:
 			PushdownState();
 			PDStateFunc func;

@@ -221,6 +221,43 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			return NoChange;
 		});
 
+	editMenu = new PushdownState([&](PushdownState** pushResult)
+		{
+			if (!inSelectionMode) {
+				world->GetMainCamera()->UpdateCamera(dt);
+			}
+
+			UpdateKeys();
+
+			if (useGravity) {
+				Debug::Print("(G)ravity on", Vector2(10, 40));
+			}
+			else {
+				Debug::Print("(G)ravity off", Vector2(10, 40));
+			}
+			Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
+				" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
+				" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
+				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
+				" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
+				Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+			SelectObject();
+			if (isEditMode)
+				EditSelectedObject();
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+			{
+				return Pop;
+			}
+			return NoChange;
+		});
+
+	editMenu->SetAwakeFunc([&]
+		{
+			inSelectionMode = false;
+		});
 
 	gameStateManager.InitState(mainMenu);
 }
@@ -231,12 +268,7 @@ void TutorialGame::UpdateGame(float dt) {
 	gameStateManager.Update();
 
 
-	if (isPlaying)
-	{
-		GooseCameraMovement();
-		GooseMovement();
-	}
-	else if (isDebuging)
+	if (isDebuging)
 	{
 		if (!inSelectionMode) {
 			world->GetMainCamera()->UpdateCamera(dt);
@@ -281,6 +313,9 @@ void TutorialGame::UpdateGame(float dt) {
 }
 
 void TutorialGame::UpdateKeys() {
+	int offset = 20;
+	int i = 4;
+	Debug::Print("F1 to reset world. F2 to reset camera.", Vector2(10, i++ * offset));
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
 		InitWorld(); //We can reset the simulation at any time with F1
 		selectionObject = nullptr;
@@ -290,6 +325,7 @@ void TutorialGame::UpdateKeys() {
 		InitCamera(); //F2 will reset the camera to a specific default place
 	}
 
+	Debug::Print("F3 to save the map. F4 to load a map.", Vector2(10, i++ * offset));
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) { // Save Map
 		cout << "Enter the map name to save: ";
 		string fileName;
@@ -322,10 +358,13 @@ void TutorialGame::UpdateKeys() {
 		}
 	}
 
+	Debug::Print("F5 to toggle edit mode.", Vector2(10, i++ * offset));
+
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) { // edit mode
 		isEditMode = isEditMode ? false : true;
 	}
 
+	Debug::Print("F6 to create a new map.", Vector2(10, i++ * offset));
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) // create new map
 	{
 		cout << "Enter map size(two integer): ";
@@ -338,11 +377,6 @@ void TutorialGame::UpdateKeys() {
 		isEditMode = true;
 	}
 
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7))
-	{
-		isPlaying = isPlaying ? false : true;
-	}
-
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
 		useGravity = !useGravity; //Toggle gravity!
 		physics->UseGravity(useGravity);
@@ -351,7 +385,7 @@ void TutorialGame::UpdateKeys() {
 	//bias in the calculations - the same objects might keep 'winning' the constraint
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
 	//is random every frame can help reduce such bias.
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
+	/*if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
 		world->ShuffleConstraints(true);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
@@ -370,7 +404,7 @@ void TutorialGame::UpdateKeys() {
 	}
 	else {
 		DebugObjectMovement();
-	}
+	}*/
 }
 
 void TutorialGame::LockedObjectMovement() {
@@ -593,7 +627,7 @@ bool TutorialGame::SelectObject() {
 				return false;
 			}
 		}
-		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
+		/*if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
 			if (selectionObject) {
 				if (lockedObject == selectionObject) {
 					lockedObject = nullptr;
@@ -602,7 +636,7 @@ bool TutorialGame::SelectObject() {
 					lockedObject = selectionObject;
 				}
 			}
-		}
+		}*/
 	}
 	else {
 		renderer->DrawString("Press Q to change to select mode!", Vector2(10, 0));
@@ -615,8 +649,17 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	if (!selectionObject) {
 		return;// we haven ’t selected anything !
 	}
-	Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(10, 80), Vector4(0.2, 0.2, 0.2, 0.9));
-	Debug::Print("J:Goose U:Water O:Apple", Vector2(10, 60), Vector4(0.2, 0.2, 0.2, 0.9));
+	int offset = 40;
+	int i = 1;
+	Debug::Print("N:Low", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("H:High", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("I:Watcher", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("K:Keeper", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("J:Goose", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("U:Water", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("O:Apple", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	//Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.2, 0.2, 0.2, 0.9));
+	//Debug::Print("J:Goose U:Water O:Apple", Vector2(renderer->GetWindowSize().x - 300, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
 	pos -= worldOffset;
 	int x = pos.x / (TILESIZE * 2);

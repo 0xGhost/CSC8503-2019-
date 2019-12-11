@@ -5,7 +5,8 @@ using namespace NCL::CSC8503;
 PushdownState::PushdownState(PDStateFunc stateFunc)
 {
 	func = stateFunc;
-	PushdownState();
+	awakeFunc = []() {};
+	sleepFunc = []() {};
 }
 
 NCL::CSC8503::PushdownState::PushdownState()

@@ -25,7 +25,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 			RayCollision closestCollision;
 			Ray ray(watcherPos, rayDir.Normalised());
 
-			if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
+			if (physics->Raycast(ray, closestCollision, true, ~(1 << 6) & ~(1 << 3)))
 			{
 				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 					&& ((GooseObject*)closestCollision.node)->CheckApple())
@@ -59,7 +59,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true,  ~(1 << 6) & ~(1 << 3)))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 				&& ((GooseObject*)closestCollision.node)->CheckApple())
@@ -115,7 +115,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true,  ~(1 << 6) & ~(1 << 3)))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 				&& ((GooseObject*)closestCollision.node)->CheckApple())
@@ -165,7 +165,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true, ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true,  ~(1 << 6) & ~(1 << 3)))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() != PlayerTag
 				|| !((GooseObject*)closestCollision.node)->CheckApple())
