@@ -19,6 +19,7 @@ namespace NCL {
 			Null,
 			PlayerTag,
 			TileTag,
+			WaterTag,
 			HumanTag,
 			BallTag,
 			AppleTag,

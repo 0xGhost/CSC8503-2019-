@@ -34,6 +34,15 @@ void PushdownMachine::Update() {
 					activeState->OnAwake();
 				}
 			}break;
+			case PopUntilBottom: {
+				while (stateStack.size() > 1)
+				{
+					activeState->OnSleep();
+					stateStack.pop();
+					activeState = stateStack.top();
+					activeState->OnAwake();
+				}
+			}break;
 			case Push: {
 				activeState->OnSleep();
 				stateStack.push(newState);

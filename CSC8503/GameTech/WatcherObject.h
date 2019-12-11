@@ -18,7 +18,7 @@ namespace NCL {
 			//StateMachine *stateMachine;
 			float attackDistance;
 			float detectionDistance;
-			const float totalCoolDownTime = 2.0f;
+			const float totalCoolDownTime = 1.0f;
 			float coolDownTime;
 			int ready;
 			WatcherFunc throwBall;

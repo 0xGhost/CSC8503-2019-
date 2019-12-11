@@ -5,6 +5,9 @@
 #include "../CSC8503Common/NavigationGrid.h"
 #include "GooseObject.h"
 #include "..//CSC8503Common/PushdownMachine.h"
+#include "../CSC8503Common/GameServer.h"
+#include "../CSC8503Common/GameClient.h"
+#include "GamePacketReceiver.h"
 
 const int TILESIZE = 5;
 const float WATERY = -0.2f;
@@ -87,6 +90,7 @@ namespace NCL {
 			void AddTileToWorld(int x, int z);
 			GameObject* AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass = 10.0f, Vector4 color = Vector4(1,1,1,1));
 			//IT'S HAPPENING
+			GameObject* AddObstancleToWorld(const Vector3& position, int score);
 			GameObject* AddGooseToWorld(const Vector3& position);
 			GameObject* AddParkKeeperToWorld(const Vector3& position);
 			GameObject* AddCharacterToWorld(const Vector3& position, const int r = 0);
@@ -127,6 +131,8 @@ namespace NCL {
 			float dt;
 			float totalTime;
 			float timeLeft;
+			float obstancleTime;
+			float obstancleCDTime;
 			Vector2 mapSize;
 			int* mapTiles;
 			int mapData[100] = 
@@ -143,6 +149,7 @@ namespace NCL {
 				4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
 
 			};
+			vector<Vector2> lowGrounds;
 			Vector3 lightPos;
 
 			GooseObject* goose;
@@ -152,10 +159,17 @@ namespace NCL {
 			
 			PushdownMachine gameStateManager;
 			PushdownState* mainMenu;
+			PushdownState* lobbyMenu;
+			PushdownState* multiplayerMenu;
 			PushdownState* selectMapMenu;
-			PushdownState* editMenu;
+			PushdownState* editModeState;
 			PushdownState* inGameState;
 			PushdownState* pauseState;
+			PushdownState* finishState;
+
+			GameServer* server;
+			GameClient* client;
+			GamePacketReceiver* packetReceiver;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

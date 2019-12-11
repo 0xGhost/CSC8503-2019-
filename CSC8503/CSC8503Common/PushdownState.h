@@ -4,7 +4,7 @@
 namespace NCL {
 	namespace CSC8503 {
 		enum PushdownResult {
-			Push, Pop, NoChange
+			Push, Pop, PopUntilBottom, NoChange
 		};
 		class PushdownState;
 		typedef std::function<PushdownResult(PushdownState**)> PDStateFunc;

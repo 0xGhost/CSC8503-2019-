@@ -11,7 +11,7 @@ void NCL::CSC8503::AppleObject::OnCollisionBegin(GameObject* otherObject)
 			goose->PickApple(this);
 			float distance = (this->transform.GetWorldPosition() - goose->GetTransform().GetWorldPosition()).Length();
 
-			constraint = new PositionConstraint(this, otherObject, distance);
+			constraint = new PositionConstraint(this, otherObject, distance); // TODO new Constraint help the apple stay at front
 			world->AddConstraint(constraint);
 		}
 	}
@@ -24,9 +24,10 @@ void NCL::CSC8503::AppleObject::OnCollisionBegin(GameObject* otherObject)
 	else if (otherObject->GetTag() == HomeTag && goose)
 	{
 		RemoveConstraint();
-		goose->BackHomeWithApple();
+		goose->BackHomeWithApple(score);
 		goose = nullptr;
-		transform.SetWorldPosition(originalPosition);
+		//transform.SetWorldPosition(originalPosition);
+		transform.SetWorldPosition(transform.GetWorldPosition() + Vector3(0,-100,0));
 		physicsObject->ClearForces();
 		physicsObject->SetLinearVelocity(Vector3(0, 0, 0));
 		physicsObject->SetAngularVelocity(Vector3(0, 0, 0));

@@ -8,7 +8,7 @@ namespace NCL {
 			public GameObject
 		{
 		public:
-			GooseObject(string n = "", Tag t = Tag::Null) : GameObject(n, t) { apple = nullptr; score = 0; }
+			GooseObject(string n = "", Tag t = Tag::Null);
 
 			virtual void Update(float dt) override;
 			virtual void OnCollisionBegin(GameObject* otherObject) override;
@@ -16,11 +16,13 @@ namespace NCL {
 			bool CheckApple() { return apple; }
 			void PickApple(AppleObject* a) { apple = a; }
 			void LostApple() { apple = nullptr; }
-			void BackHomeWithApple() { apple = nullptr; score++; }
+			void BackHomeWithApple(int s) { apple = nullptr; score += s; }
 			int GetScore() const { return score; }
 		protected:
 			AppleObject* apple;
 			int score;
+			float waterFriciton;
+			float groundFriction;
 		};
 	}
 }

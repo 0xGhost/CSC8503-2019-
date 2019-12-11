@@ -10,7 +10,7 @@ namespace NCL {
 			public GameObject
 		{
 		public:
-			AppleObject(string n = "", Tag t = Tag::Null) : GameObject(n, t) { }
+			AppleObject(string n = "", Tag t = Tag::Null, int score = 1) : GameObject(n, t), score(score) { }
 			virtual void OnCollisionBegin(GameObject* otherObject) override;
 			//void AddConstraintWithGoose(GooseObec )
 			void RemoveConstraint();
@@ -20,6 +20,7 @@ namespace NCL {
 			PositionConstraint* constraint;
 			GooseObject* goose;
 			GameWorld* world;
+			int score;
 			Vector3 originalPosition;
 		};
 	}

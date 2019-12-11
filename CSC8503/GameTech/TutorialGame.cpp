@@ -26,7 +26,8 @@ TutorialGame::TutorialGame() {
 	renderer = new GameTechRenderer(*world);
 	physics = new PhysicsSystem(*world);
 	physics->InitLayerCollisionMatrix(true);
-
+	totalTime = 180;
+	obstancleTime = 10;
 	forceMagnitude = 100.0f;
 	isPlaying = false;
 	isDebuging = false;
@@ -176,7 +177,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("F2 to start a multi-player game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("F3 to enter edit and debug mode", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
-			
+
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
 			{
 				LoadMap();
@@ -186,14 +187,17 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				//pushResult = &selectMapMenu;
 				return Push;
 			}
-			// TODO: F2 -> mutli-player game
-
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2))
+			{
+				*pushResult = multiplayerMenu;
+				return Push;
+			}
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3))
 			{
 				InitWorld();
 				selectionObject = nullptr;
 				//isDebuging = true;
-				*pushResult = editMenu;
+				*pushResult = editModeState;
 				return Push;
 			}
 			return NoChange;
@@ -204,24 +208,121 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			physics->Clear();
 		});
 
+	multiplayerMenu = new PushdownState([&](PushdownState** pushResult)
+		{
+			int i = 1;
+			int offset = 40;
+			Debug::Print("F1 to create a room", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("F2 to join a room", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("B to back to main menu", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			
+			NetworkBase::Initialise();
+			
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
+			{
+				server = new GameServer(1234, 3);
+				packetReceiver = new GamePacketReceiver("Host");
+				server->RegisterPacketHandler(String_Message, packetReceiver);
+
+				*pushResult = lobbyMenu;
+				return Push;
+			}
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2))
+			{
+				client = new GameClient();
+				cout << "Enter server IP:" << endl;
+				int a, b, c, d;
+				cin >> a >> b >> c >> d;
+				if (client->Connect(a, b, c, d, 1234))
+				{
+					*pushResult = lobbyMenu;
+					return Push;
+				}
+				cout << "connect failed" << endl;
+				return NoChange;
+			}
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+			{
+				return PopUntilBottom;
+			}
+			return NoChange;
+		});
+	multiplayerMenu->SetAwakeFunc([&]() {
+		if (server) delete server;
+		if (client) delete client;
+		if (packetReceiver) delete packetReceiver;
+		});
+
 	inGameState = new PushdownState([&](PushdownState** pushResult)
 		{
 			Debug::Print("time:" + std::to_string((int)timeLeft),
 				Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 			Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
 				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
-
+			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(B)ack to menu",	Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			
+			timeLeft -= dt;
+			obstancleCDTime += dt;
 			GooseCameraMovement();
 			GooseMovement();
+			world->UpdateWorld(dt);
+			if (obstancleCDTime > obstancleTime)
+			{
+				obstancleCDTime = 0;
+				int index = rand() % lowGrounds.size();
 
+				Vector3 position = Vector3(lowGrounds[index].x * 2 * TILESIZE, 15, lowGrounds[index].y * 2 * TILESIZE);
+				position += worldOffset;
+				AddObstancleToWorld(position, 2);
+			}
+
+
+			if (timeLeft < 0)
+			{
+				*pushResult = finishState;
+				return Push;
+			}
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P))
+			{
+				*pushResult = pauseState;
+				return Push;
+			}
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
 			{
-				return Pop;
+				return PopUntilBottom;
 			}
 			return NoChange;
 		});
 
-	editMenu = new PushdownState([&](PushdownState** pushResult)
+	pauseState = new PushdownState([&](PushdownState** pushResult)
+		{
+			int i = 1;
+			int offset = 40;
+			Debug::Print("P to back to game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("F1 to reset game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("B to back to main menu", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P))
+			{
+				return Pop;
+			}
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
+			{
+				InitWorld();
+				return Pop;
+			}
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+			{
+				return PopUntilBottom;
+			}
+			return NoChange;
+		});
+
+	editModeState = new PushdownState([&](PushdownState** pushResult)
 		{
 			if (!inSelectionMode) {
 				world->GetMainCamera()->UpdateCamera(dt);
@@ -242,11 +343,30 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
 				" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
 				Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(L)ock goose", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 			SelectObject();
+			world->UpdateWorld(dt);
+
 			if (isEditMode)
 				EditSelectedObject();
-
+			if (isPlaying)
+			{
+				GooseCameraMovement();
+				GooseMovement();
+			}
+				
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
+			{
+				isPlaying = !isPlaying;
+			}
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P))
+			{
+				*pushResult = pauseState;
+				return Push;
+			}
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
 			{
 				return Pop;
@@ -254,10 +374,35 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			return NoChange;
 		});
 
-	editMenu->SetAwakeFunc([&]
+	editModeState->SetAwakeFunc([&]
 		{
 			inSelectionMode = false;
 		});
+
+	finishState = new PushdownState([&](PushdownState** pushResult)
+		{
+			Debug::Print("Game Finish", Vector2(renderer->GetWindowSize().x / 2 - 220, renderer->GetWindowSize().y / 2), Vector4(0, 0, 0, 1));
+			Debug::Print("Your Score:" + std::to_string((int)goose->GetScore()), Vector2(renderer->GetWindowSize().x / 2 - 220, renderer->GetWindowSize().y / 2 - 40), Vector4(0, 0, 0, 1));
+			int offset = 40;
+			int i = 1;
+			Debug::Print("F1 to play Again", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("B to back to main menu", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
+			{
+				InitWorld();
+				return Pop;
+			}
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+			{
+				return PopUntilBottom;
+			}
+			return NoChange;
+		});
+
+
 
 	gameStateManager.InitState(mainMenu);
 }
@@ -265,6 +410,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 void TutorialGame::UpdateGame(float dt) {
 
 	this->dt = dt;
+	
 	gameStateManager.Update();
 
 
@@ -301,7 +447,7 @@ void TutorialGame::UpdateGame(float dt) {
 		else
 			MoveSelectedObject();
 	}
-	world->UpdateWorld(dt);
+	//world->UpdateWorld(dt);
 
 	renderer->Update(dt);
 	physics->Update(dt);
@@ -795,6 +941,7 @@ void TutorialGame::InitWorld() {
 	worldOffset = Vector3(-mapSize.x * TILESIZE + TILESIZE, 0, -mapSize.y * TILESIZE + TILESIZE);
 	//int* mapTemp = mapTiles;
 	players.clear();
+	lowGrounds.clear();
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for (int z = 0; z < mapSize.y; z++)
@@ -813,6 +960,8 @@ void TutorialGame::InitWorld() {
 	physics->InitQuadTree();
 	useGravity = true;
 	physics->UseGravity(true);
+	obstancleCDTime = obstancleTime;
+	timeLeft = totalTime;
 #else
 	BridgeConstraintTest();
 	//InitMixedGridWorld(10, 10, 6.0f, 6.0f);
@@ -894,6 +1043,10 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	position += worldOffset;
 	Vector3 cubeDims = Vector3(TILESIZE, TILESIZE + y, TILESIZE);
 	GameObject* onTile;
+	if (mapTiles[IndexOf(x, z)] == TileType::LowGround)
+	{
+		lowGrounds.push_back(Vector2(x,z));
+	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Apple)
 	{
 		onTile = AddAppleToWorld(position + Vector3(0, 8 + y, 0));
@@ -913,7 +1066,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	}
 	GameObject* cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
 	cube->SetLayer(2);
-	cube->SetTag(Tag::TileTag);
+	cube->SetTag(check(mapTiles[IndexOf(x, z)], TileType::Water)? Tag::WaterTag : Tag::TileTag);
 	cube->SetStatic(true);
 }
 
@@ -939,6 +1092,28 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	world->AddGameObject(cube);
 
 	return cube;
+}
+
+GameObject* NCL::CSC8503::TutorialGame::AddObstancleToWorld(const Vector3& position, int score)
+{
+	AppleObject* apple = new AppleObject("Apple", Tag::AppleTag, 2);
+
+	SphereVolume* volume = new SphereVolume(1.0f);
+	apple->SetBoundingVolume((CollisionVolume*)volume);
+	apple->GetTransform().SetWorldScale(Vector3(6, 6, 6));
+	apple->GetTransform().SetWorldPosition(position);
+	apple->SetOriginalPosition(position);
+	apple->SetWorld(world);
+	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), appleMesh, nullptr, basicShader));
+	apple->GetRenderObject()->SetColour(Vector4(0.7f, 0.1f, 0.1f, 1));
+	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
+	apple->SetLayer(7);
+	apple->GetPhysicsObject()->SetInverseMass(3.0f);
+	apple->GetPhysicsObject()->InitSphereInertia();
+
+	world->AddGameObject(apple);
+
+	return apple;
 }
 
 GameObject* TutorialGame::AddGooseToWorld(const Vector3& position)
@@ -1048,6 +1223,7 @@ GameObject* NCL::CSC8503::TutorialGame::AddChaserToWorld(const Vector3& position
 		int dx = (destination.x / (TILESIZE * 2) + 0.5);
 		int dy = (destination.z / (TILESIZE * 2) + 0.5);
 		navMap->FindPath(y, x, dy, dx, g->path);
+		g->worldOffset = worldOffset;
 		});
 	return chaser;
 }
@@ -1064,7 +1240,7 @@ GameObject* TutorialGame::AddAppleToWorld(const Vector3& position) {
 	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), appleMesh, nullptr, basicShader));
 	apple->GetRenderObject()->SetColour(Vector4(1.0f, 0.3f, 0.3f, 1));
 	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
-
+	apple->SetLayer(7);
 	apple->GetPhysicsObject()->SetInverseMass(5.0f);
 	apple->GetPhysicsObject()->InitSphereInertia();
 

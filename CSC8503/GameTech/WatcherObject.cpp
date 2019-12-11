@@ -35,7 +35,7 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, rayDir.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true, ~(1 << 6) & ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true, rayCastLayerMask))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag 
 				&& ((GooseObject*)closestCollision.node)->CheckApple())

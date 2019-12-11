@@ -3,6 +3,14 @@
 PlayerIterator HumanObject::firstPlayer;
 PlayerIterator HumanObject::lastPlayer;
 PhysicsSystem* HumanObject::physics;
+int HumanObject::rayCastLayerMask = ~((1 << 3) | (1 << 6) | (1 << 7));
+
+NCL::CSC8503::HumanObject::HumanObject(string n, Tag t) : GameObject(n, t)
+{
+	focusPlayer = nullptr;
+	waterFriciton = 0.999f;
+	groundFriction = 0.95f;
+}
 
 void NCL::CSC8503::HumanObject::UpdateDistance()
 {
@@ -13,7 +21,19 @@ void NCL::CSC8503::HumanObject::UpdateDistance()
 		if (distance > tempDis)
 		{
 			distance = tempDis;
-			focusPlayer = (GooseObject*)*i;
+			focusPlayer = (GooseObject*)* i;
 		}
+	}
+}
+
+void NCL::CSC8503::HumanObject::OnCollisionBegin(GameObject* otherObject)
+{
+	if (otherObject->GetTag() == WaterTag)
+	{
+		physicsObject->SetFriction(waterFriciton);
+	}
+	else if (otherObject->GetTag() == TileTag)
+	{
+		physicsObject->SetFriction(groundFriction);
 	}
 }

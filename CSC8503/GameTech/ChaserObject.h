@@ -23,6 +23,7 @@ namespace NCL {
 			virtual void Movement(Vector3 direction, float force);
 
 			NavigationPath path;
+			Vector3 worldOffset;
 		protected:
 			float searchDistance;
 			float detectionDistance;

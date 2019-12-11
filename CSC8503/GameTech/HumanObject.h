@@ -15,9 +15,11 @@ namespace NCL {
 			public GameObject
 		{
 		public:
-			HumanObject(string n, Tag t = Tag::Null) : GameObject(n, t) { focusPlayer = nullptr; }
+			HumanObject(string n, Tag t = Tag::Null);
 			~HumanObject() { delete stateMachine; }
 			void UpdateDistance();
+
+			virtual void OnCollisionBegin(GameObject* otherObject) override;
 
 			virtual void Update(float dt) override { if (stateMachine) stateMachine->Update(); }
 
@@ -39,6 +41,9 @@ namespace NCL {
 			float distance;
 			GooseObject* focusPlayer;
 			static PhysicsSystem* physics;
+			float waterFriciton;
+			float groundFriction;
+			static int rayCastLayerMask;
 		};
 	}
 }

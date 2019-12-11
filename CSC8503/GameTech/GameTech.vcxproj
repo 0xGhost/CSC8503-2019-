@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="AppleObject.cpp" />
     <ClCompile Include="ChaserObject.cpp" />
+    <ClCompile Include="GamePacketReceiver.cpp" />
     <ClCompile Include="GameTechRenderer.cpp" />
     <ClCompile Include="GooseObject.cpp" />
     <ClCompile Include="HumanObject.cpp" />
@@ -154,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="AppleObject.h" />
     <ClInclude Include="ChaserObject.h" />
+    <ClInclude Include="GamePacketReceiver.h" />
     <ClInclude Include="GameTechRenderer.h" />
     <ClInclude Include="GooseObject.h" />
     <ClInclude Include="HumanObject.h" />

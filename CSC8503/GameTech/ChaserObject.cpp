@@ -25,7 +25,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 			RayCollision closestCollision;
 			Ray ray(watcherPos, rayDir.Normalised());
 
-			if (physics->Raycast(ray, closestCollision, true, ~(1 << 6) & ~(1 << 3)))
+			if (physics->Raycast(ray, closestCollision, true, rayCastLayerMask))
 			{
 				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 					&& ((GooseObject*)closestCollision.node)->CheckApple())
@@ -59,7 +59,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true,  ~(1 << 6) & ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true,  rayCastLayerMask))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 				&& ((GooseObject*)closestCollision.node)->CheckApple())
@@ -68,29 +68,30 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 				return;
 			}
 		}
+		path.Clear();
 		getPath(originPosition, this);
 
 		Vector3 nextPos;
 		path.PopWaypoint(nextPos); path.PopWaypoint(nextPos);
-		nextPos += Vector3(-45, 0, -45);
+		nextPos += worldOffset;
 		Vector3 moveDir = nextPos - this->GetTransform().GetWorldPosition();
 		moveDir.y = 0;
 		Movement(moveDir, walkForce);
 
-		/*Vector3 pos;
-		vector<Vector3> testNodes;
-		while (path.PopWaypoint(pos)) {
-			testNodes.push_back(pos);
-		}
-		for (int i = 1; i < testNodes.size(); ++i) {
-			Vector3 a = testNodes[i - 1];
-			Vector3 b = testNodes[i];
-			a.y = 15;
-			b.y = 15;
-			a += Vector3(-45,0,-45);
-			b += Vector3(-45, 0, -45);
-			Debug::DrawLine(a, b, Vector4(0, 1, 0, 1));
-		}*/
+		//Vector3 pos;
+		//vector<Vector3> testNodes;
+		//while (path.PopWaypoint(pos)) {
+		//	testNodes.push_back(pos);
+		//}
+		//for (int i = 1; i < testNodes.size(); ++i) {
+		//	Vector3 a = testNodes[i - 1];
+		//	Vector3 b = testNodes[i];
+		//	a.y = 15;
+		//	b.y = 15;
+		//	a += worldOffset;
+		//	b += worldOffset;
+		//	Debug::DrawLine(a, b, Vector4(0, 1, 0, 1));
+		//}
 
 	};
 
@@ -115,7 +116,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true,  ~(1 << 6) & ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true,  rayCastLayerMask))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 				&& ((GooseObject*)closestCollision.node)->CheckApple())
@@ -123,7 +124,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 				*state = 1;
 			}
 		}
-		
+		path.Clear();
 		getPath(playerPos, this);
 
 		/*Vector3 pos;
@@ -143,7 +144,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 		Vector3 nextPos;
 		path.PopWaypoint(nextPos); path.PopWaypoint(nextPos);
-		nextPos += Vector3(-45, 0, -45);
+		nextPos += worldOffset;
 		Vector3 moveDir = nextPos - this->GetTransform().GetWorldPosition();
 		moveDir.y = 0;
 		Movement(moveDir, walkForce);
@@ -165,7 +166,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true,  ~(1 << 6) & ~(1 << 3)))
+		if (physics->Raycast(ray, closestCollision, true,  rayCastLayerMask))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() != PlayerTag
 				|| !((GooseObject*)closestCollision.node)->CheckApple())
