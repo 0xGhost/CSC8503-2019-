@@ -53,6 +53,9 @@ bool GameServer::SendGlobalPacket(int msgID) {
 }
 
 bool GameServer::SendGlobalPacket(GamePacket& packet) {
+	if (!netHandle) {
+		return false;
+	}
 	ENetPacket* dataPacket = enet_packet_create(&packet, packet.GetTotalSize(), 0);
 	enet_host_broadcast(netHandle, 0, dataPacket);
 	return true;
@@ -71,6 +74,16 @@ bool NCL::CSC8503::GameServer::SendPacketToPeer(int peer, GamePacket& packet)
 	ENetPacket* dataPacket = enet_packet_create(&packet, packet.GetTotalSize(), 0);
 	enet_peer_send(clients[peer], 0, dataPacket);
 	return true;
+}
+
+std::vector<int> NCL::CSC8503::GameServer::GetClientsID()
+{
+	std::vector<int> v;
+	for (ENetPeer* client : clients)
+	{
+		v.push_back(client->incomingPeerID);
+	}
+	return v;
 }
 
 void GameServer::UpdateServer() {

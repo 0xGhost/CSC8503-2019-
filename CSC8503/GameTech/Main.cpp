@@ -97,7 +97,11 @@ void TestNetworking() {
 	server->UpdateServer();
 	client->UpdateClient();
 	client2->UpdateClient();
-	for (int i = 0; i < 100; ++i) {
+	server->UpdateServer();
+	client->UpdateClient();
+	client2->UpdateClient();
+
+	for (int i = 0; i < 4; ++i) {
 		//server->SendGlobalPacket(StringPacket("Server says hello !" + std::to_string(i)));
 		client->SendPacket(
 			StringPacket("Client says hello !" + std::to_string(i)));
@@ -172,6 +176,7 @@ int main() {
 	//TestStateMachine();
 	//TestNetworking();
 	//TestPathfinding();
+	srand((unsigned int)time(0));
 
 	w->ShowOSPointer(false);
 	w->LockMouseToWindow(true);

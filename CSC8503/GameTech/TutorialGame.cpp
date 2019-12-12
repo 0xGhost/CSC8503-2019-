@@ -26,14 +26,14 @@ TutorialGame::TutorialGame() {
 	renderer = new GameTechRenderer(*world);
 	physics = new PhysicsSystem(*world);
 	physics->InitLayerCollisionMatrix(true);
-	totalTime = 180;
+	totalTime = 20;
 	obstancleTime = 10;
 	forceMagnitude = 100.0f;
 	isPlaying = false;
 	isDebuging = false;
 	useGravity = false;
 	inSelectionMode = false;
-	mapSize = Vector2(10, 10);
+	mapSize = Vector2Int(10, 10);
 	mapTiles = new int[100];
 	memcpy(mapTiles, mapData, 100 * sizeof(int));
 	Debug::SetRenderer(renderer);
@@ -59,6 +59,9 @@ TutorialGame::~TutorialGame() {
 	delete inGameState;
 	delete pauseState;
 
+	if (server) delete server;
+	if (client) delete client;
+	if (packetReceiver) delete packetReceiver;
 }
 
 void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (invalid_argument)
@@ -69,6 +72,10 @@ void NCL::CSC8503::TutorialGame::LoadMapData(const string& fileName) throw (inva
 		throw invalid_argument("Fail to read the file \"" + fileName + "\".");
 
 	fileInput >> mapSize.x >> mapSize.y;
+	if (mapSize.x > 30 || mapSize.y > 30)
+	{
+		throw invalid_argument("File contain invalid data: map size too large");
+	}
 	delete[] mapTiles;
 	mapTiles = new int[mapSize.x * mapSize.y];
 	for (int x = 0; x < mapSize.x; x++)
@@ -107,8 +114,9 @@ void NCL::CSC8503::TutorialGame::SaveMapData(const string& fileName) throw (inva
 void NCL::CSC8503::TutorialGame::LoadMap()
 {
 	cout << "Enter the map name to load: ";
-	string fileName;
-	cin >> fileName;
+	string fileName = "20map1";
+	//string fileName;
+	//cin >> fileName;
 	try
 	{
 		LoadMapData(fileName);
@@ -116,7 +124,7 @@ void NCL::CSC8503::TutorialGame::LoadMap()
 		selectionObject = nullptr;
 		std::cout << "Map load successful." << endl;
 	}
-	catch (const invalid_argument& iae)
+	catch (const invalid_argument & iae)
 	{
 		std::cout << "Unable to read data : " << iae.what() << "\n";
 	}
@@ -132,7 +140,7 @@ void NCL::CSC8503::TutorialGame::SaveMap()
 		SaveMapData(fileName);
 		std::cout << "Map save successful." << endl;
 	}
-	catch (const invalid_argument& iae)
+	catch (const invalid_argument & iae)
 	{
 		std::cout << "Unable to write data : " << iae.what() << "\n";
 	}
@@ -189,6 +197,8 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			}
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2))
 			{
+				//cout << "enter your name:" << endl;
+				//cin >> playerName;
 				*pushResult = multiplayerMenu;
 				return Push;
 			}
@@ -214,16 +224,20 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			int offset = 40;
 			Debug::Print("F1 to create a room", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("F2 to join a room", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			Debug::Print("F3 to join a local server", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("B to back to main menu", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
-			
+
 			NetworkBase::Initialise();
-			
+
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
 			{
 				server = new GameServer(1234, 3);
-				packetReceiver = new GamePacketReceiver("Host");
+				packetReceiver = new GamePacketReceiver("Server");
 				server->RegisterPacketHandler(String_Message, packetReceiver);
+				server->RegisterPacketHandler(FinalScore, packetReceiver);
+				server->RegisterPacketHandler(Player_Connected, packetReceiver);
+				server->RegisterPacketHandler(Player_Disconnected, packetReceiver);
 
 				*pushResult = lobbyMenu;
 				return Push;
@@ -231,6 +245,14 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2))
 			{
 				client = new GameClient();
+				packetReceiver = new GamePacketReceiver("Client");
+				client->RegisterPacketHandler(String_Message, packetReceiver);
+				client->RegisterPacketHandler(Map, packetReceiver);
+				client->RegisterPacketHandler(Time, packetReceiver);
+				client->RegisterPacketHandler(Obstancle, packetReceiver);
+				client->RegisterPacketHandler(Player_Connected, packetReceiver);
+				client->RegisterPacketHandler(Player_Disconnected, packetReceiver);
+
 				cout << "Enter server IP:" << endl;
 				int a, b, c, d;
 				cin >> a >> b >> c >> d;
@@ -239,7 +261,27 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 					*pushResult = lobbyMenu;
 					return Push;
 				}
-				cout << "connect failed" << endl;
+				cout << "Connect failed" << endl;
+				return NoChange;
+			}
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3))
+			{
+				client = new GameClient();
+				packetReceiver = new GamePacketReceiver("Client");
+				client->RegisterPacketHandler(String_Message, packetReceiver);
+				client->RegisterPacketHandler(Map, packetReceiver);
+				client->RegisterPacketHandler(Time, packetReceiver);
+				client->RegisterPacketHandler(Obstancle, packetReceiver);
+				client->RegisterPacketHandler(Player_Connected, packetReceiver);
+				client->RegisterPacketHandler(Player_Disconnected, packetReceiver);
+
+				if (client->Connect(127, 0, 0, 1, 1234))
+				{
+					*pushResult = lobbyMenu;
+					return Push;
+				}
+				cout << "Connect failed" << endl;
 				return NoChange;
 			}
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
@@ -249,10 +291,159 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			return NoChange;
 		});
 	multiplayerMenu->SetAwakeFunc([&]() {
-		if (server) delete server;
-		if (client) delete client;
-		if (packetReceiver) delete packetReceiver;
+		if (server) {
+			delete server; 
+			server = nullptr;
+		}
+		if (client) {
+			delete client; 
+			client = nullptr;
+		}
+		if (packetReceiver) {
+			delete packetReceiver; 
+			packetReceiver = nullptr;
+		}
 		});
+
+	lobbyMenu = new PushdownState([&](PushdownState** pushResult)
+		{
+			if (server)
+			{
+				server->UpdateServer();
+				Debug::Print("Server Lobby  Press F1 to start", Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+				string s = "| PlayerS";
+				//server->SendGlobalPacket(StringPacket("Server says hello !"));
+				vector<int> clientsID = server->GetClientsID();
+				for (int i = 0; i < clientsID.size(); i++)
+				{
+					s += " | Player" + std::to_string(clientsID[i]);
+				}
+				server->SendGlobalPacket(StringPacket(s));
+				Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+				
+				if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
+				{
+					LoadMap();
+					server->SendGlobalPacket(MapPacket(mapTiles, mapSize.x, mapSize.y));
+					server->UpdateServer();
+					InitWorld();
+
+					
+					*pushResult = multiplayerInGameState;
+					return Push;
+				}
+			}
+			else if (client)
+			{
+				client->UpdateClient();
+
+				Debug::Print("Client Lobby  You are Player" + std::to_string(client->GetID()), Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+				string s = packetReceiver->GetNextString();
+				if (!s.empty())
+				{
+					Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+				}
+
+				if (packetReceiver->MapReady())
+				{
+					packetReceiver->LoadMapData(mapSize.x, mapSize.y, mapTiles);
+					InitWorld();
+					*pushResult = multiplayerInGameState;
+					return Push;
+				}
+			}
+			
+
+			return NoChange;
+		}
+	);
+
+	multiplayerInGameState = new PushdownState([&](PushdownState** pushResult)
+		{
+			if (server)
+			{
+				Debug::Print("time:" + std::to_string((int)timeLeft),
+					Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
+					Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+				//Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+				timeLeft -= dt;
+				obstancleCDTime += dt;
+				GooseCameraMovement();
+				GooseMovement();
+				world->UpdateWorld(dt);
+				if (obstancleCDTime > obstancleTime)
+				{
+					obstancleCDTime = 0;
+					int index = rand() % lowGrounds.size();
+
+					Vector3 position = Vector3(lowGrounds[index].x * 2 * TILESIZE, 15, lowGrounds[index].y * 2 * TILESIZE);
+					position += worldOffset;
+					AddObstancleToWorld(position, 2);
+					server->SendGlobalPacket(ObstanclePacket(position, 2));
+				}
+
+				// send time
+				server->SendGlobalPacket(TimePacket((int)timeLeft));
+				server->UpdateServer();
+
+				if (timeLeft < 0)
+				{
+					*pushResult = finishState;
+					server->SendGlobalPacket(TimePacket(-1));
+					server->UpdateServer();
+					return Push;
+				}
+				if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+				{
+					delete server;
+					server = nullptr;
+					return PopUntilBottom;
+				}
+			}
+			else if (client)
+			{
+				client->UpdateClient();
+				timeLeft = packetReceiver->GetTime();
+				Debug::Print("time:" + std::to_string((int)timeLeft),
+					Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
+					Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+				//Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+
+				GooseCameraMovement();
+				GooseMovement();
+				world->UpdateWorld(dt);
+
+				if (packetReceiver->ObstancleReady())
+				{
+					Vector3 position;
+					int score;
+					packetReceiver->GetObstancleData(position, score);
+					AddObstancleToWorld(position, score);
+				}
+
+				if (timeLeft < 0)
+				{
+					*pushResult = finishState;
+					client->SendPacket(FinalScorePacket(client->GetID(), (*players.begin())->GetScore()));
+					client->UpdateClient();
+					return Push;
+				}
+				if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
+				{
+					delete client;
+					client = nullptr;
+					return PopUntilBottom;
+				}
+			}
+			return NoChange;
+		}
+	);
 
 	inGameState = new PushdownState([&](PushdownState** pushResult)
 		{
@@ -261,8 +452,8 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
 				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
 			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(B)ack to menu",	Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
-			
+			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+
 			timeLeft -= dt;
 			obstancleCDTime += dt;
 			GooseCameraMovement();
@@ -294,7 +485,8 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				return PopUntilBottom;
 			}
 			return NoChange;
-		});
+		}
+	);
 
 	pauseState = new PushdownState([&](PushdownState** pushResult)
 		{
@@ -357,7 +549,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				GooseCameraMovement();
 				GooseMovement();
 			}
-				
+
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::L))
 			{
 				isPlaying = !isPlaying;
@@ -385,15 +577,35 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("Your Score:" + std::to_string((int)goose->GetScore()), Vector2(renderer->GetWindowSize().x / 2 - 220, renderer->GetWindowSize().y / 2 - 40), Vector4(0, 0, 0, 1));
 			int offset = 40;
 			int i = 1;
-			Debug::Print("F1 to play Again", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			if (server)
+			{
+				string finalStr = "PlayerS:" + std::to_string(players[0]->GetScore()) + packetReceiver->GetFinalScoreMessage();
+				server->SendGlobalPacket(StringPacket(finalStr));
+				server->UpdateServer();
+				Debug::Print(finalStr, Vector2(renderer->GetWindowSize().x / 2 - 620, renderer->GetWindowSize().y / 2 - 80), Vector4(0, 0, 0, 1));
+			}
+			else if(client)
+			{
+				client->UpdateClient();
+				string s = packetReceiver->GetNextString();
+				if (!s.empty())
+					finalResult = s;
+				Debug::Print(finalResult, Vector2(renderer->GetWindowSize().x / 2 - 620, renderer->GetWindowSize().y / 2 - 80), Vector4(0, 0, 0, 1));
+
+			}
+			else
+			{
+				Debug::Print("F1 to play Again", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+				if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
+				{
+					InitWorld();
+					return Pop;
+				}
+			}
 			Debug::Print("B to back to main menu", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 
-			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
-			{
-				InitWorld();
-				return Pop;
-			}
+			
 
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
 			{
@@ -410,7 +622,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 void TutorialGame::UpdateGame(float dt) {
 
 	this->dt = dt;
-	
+
 	gameStateManager.Update();
 
 
@@ -481,7 +693,7 @@ void TutorialGame::UpdateKeys() {
 			SaveMapData(fileName);
 			std::cout << "Map save successful." << endl;
 		}
-		catch (const invalid_argument& iae)
+		catch (const invalid_argument & iae)
 		{
 			std::cout << "Unable to write data : " << iae.what() << "\n";
 		}
@@ -498,7 +710,7 @@ void TutorialGame::UpdateKeys() {
 			selectionObject = nullptr;
 			std::cout << "Map load successful. Press F1 to use new map" << endl;
 		}
-		catch (const invalid_argument& iae)
+		catch (const invalid_argument & iae)
 		{
 			std::cout << "Unable to read data : " << iae.what() << "\n";
 		}
@@ -514,7 +726,14 @@ void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) // create new map
 	{
 		cout << "Enter map size(two integer): ";
-		cin >> mapSize.x >> mapSize.y;
+		int x, y;
+		cin >> x >> y;
+		if (x > 30 || y > 30)
+		{
+			cout << "Map size cannot larger than 30" << endl;
+			return;
+		}
+		mapSize = Vector2Int(x, y);
 		delete[] mapTiles;
 		mapTiles = new int[mapSize.x * mapSize.y];
 		memset(mapTiles, TileType::LowGround, mapSize.x * mapSize.y * sizeof(int));
@@ -783,12 +1002,12 @@ bool TutorialGame::SelectObject() {
 				}
 			}
 		}*/
-	}
+			}
 	else {
 		renderer->DrawString("Press Q to change to select mode!", Vector2(10, 0));
 	}
 	return false;
-}
+		}
 
 void NCL::CSC8503::TutorialGame::EditSelectedObject()
 {
@@ -909,7 +1128,7 @@ void TutorialGame::InitCamera() {
 	world->GetMainCamera()->SetYaw(315.0f);
 	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 	lockedObject = nullptr;
-}
+	}
 
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();
@@ -1045,7 +1264,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	GameObject* onTile;
 	if (mapTiles[IndexOf(x, z)] == TileType::LowGround)
 	{
-		lowGrounds.push_back(Vector2(x,z));
+		lowGrounds.push_back(Vector2(x, z));
 	}
 	if (mapTiles[IndexOf(x, z)] == TileType::Apple)
 	{
@@ -1066,7 +1285,7 @@ void NCL::CSC8503::TutorialGame::AddTileToWorld(int x, int z)
 	}
 	GameObject* cube = AddCubeToWorld(position, cubeDims, 0, cubeColor);
 	cube->SetLayer(2);
-	cube->SetTag(check(mapTiles[IndexOf(x, z)], TileType::Water)? Tag::WaterTag : Tag::TileTag);
+	cube->SetTag(check(mapTiles[IndexOf(x, z)], TileType::Water) ? Tag::WaterTag : Tag::TileTag);
 	cube->SetStatic(true);
 }
 

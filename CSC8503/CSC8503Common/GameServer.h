@@ -26,6 +26,8 @@ namespace NCL {
 			bool SendPacketToPeer(int peer, int msgID);
 			bool SendPacketToPeer(int peer, GamePacket& packet);
 
+			std::vector<int> GetClientsID();
+
 			virtual void UpdateServer();
 
 		protected:

@@ -17,7 +17,21 @@ const float HIGHGROUNDY = 4;// -WATERY;
 
 namespace NCL {
 	namespace CSC8503 {
-
+		struct Vector2Int
+		{
+			int x;
+			int y;
+			Vector2Int(int x, int y)
+			{
+				this->x = x;
+				this->y = y;
+			}
+			Vector2Int()
+			{
+				this->x = 0;
+				this->y = 0;
+			}
+		};
 		enum TileType
 		{
 			
@@ -133,7 +147,7 @@ namespace NCL {
 			float timeLeft;
 			float obstancleTime;
 			float obstancleCDTime;
-			Vector2 mapSize;
+			Vector2Int mapSize;
 			int* mapTiles;
 			int mapData[100] = 
 			{
@@ -161,6 +175,7 @@ namespace NCL {
 			PushdownState* mainMenu;
 			PushdownState* lobbyMenu;
 			PushdownState* multiplayerMenu;
+			PushdownState* multiplayerInGameState;
 			PushdownState* selectMapMenu;
 			PushdownState* editModeState;
 			PushdownState* inGameState;
@@ -170,6 +185,10 @@ namespace NCL {
 			GameServer* server;
 			GameClient* client;
 			GamePacketReceiver* packetReceiver;
+			GamePacketReceiver* serverPacketReceiver;
+			string playerName;
+			string finalResult;
+			vector<string> clientNames;
 
 			//Coursework Additional functionality	
 			GameObject* lockedObject	= nullptr;

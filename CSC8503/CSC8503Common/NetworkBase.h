@@ -8,6 +8,10 @@ enum BasicNetworkMessages {
 	None,
 	Hello,
 	Message,
+	Map,
+	Time,
+	Obstancle,
+	FinalScore,
 	String_Message,
 	Delta_State,	//1 byte per channel since the last state
 	Full_State,		//Full transform etc
