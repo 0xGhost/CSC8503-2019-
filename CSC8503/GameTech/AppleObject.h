@@ -1,6 +1,6 @@
 #pragma once
 #include "..\CSC8503Common\GameObject.h"
-#include "../CSC8503Common/PositionConstraint.h"
+#include "FrontPositionConstraint.h"
 #include "GooseObject.h"
 
 namespace NCL {
@@ -17,7 +17,7 @@ namespace NCL {
 			void SetOriginalPosition(Vector3 p) { originalPosition = p; }
 			void SetWorld(GameWorld* w) { world = w; }
 		protected:
-			PositionConstraint* constraint;
+			FrontPositionConstraint* constraint;
 			GooseObject* goose;
 			GameWorld* world;
 			int score;

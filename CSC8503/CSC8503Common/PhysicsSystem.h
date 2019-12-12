@@ -29,6 +29,9 @@ namespace NCL {
 			void SetLayerCollision(unsigned int a, unsigned int b, bool c) { LayerCollisionMatrix[a][b] = c; LayerCollisionMatrix[b][a] = c; }
 
 			bool Raycast(Ray& r, RayCollision& closestCollision, bool closestObject = false, unsigned int layerMask = ~0) const;
+			
+			bool quadTreeDebug = false;
+			bool staticTreeDebug = false;
 		protected:
 			void BasicCollisionDetection();
 			void BroadPhase();
@@ -64,6 +67,7 @@ namespace NCL {
 			std::set<CollisionDetection::CollisionInfo>		broadphaseCollisions;
 			std::vector<CollisionDetection::CollisionInfo>	broadphaseCollisionsVec;
 			bool useBroadPhase = true;
+
 			int numCollisionFrames = 5;
 
 			bool LayerCollisionMatrix[32][32];

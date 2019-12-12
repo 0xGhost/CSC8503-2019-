@@ -622,7 +622,6 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 void TutorialGame::UpdateGame(float dt) {
 
 	this->dt = dt;
-
 	gameStateManager.Update();
 
 
@@ -741,6 +740,11 @@ void TutorialGame::UpdateKeys() {
 		selectionObject = nullptr;
 		isEditMode = true;
 	}
+
+	Debug::Print("F7 to toggle dynamic quad tree.", Vector2(10, i++ * offset));
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) physics->quadTreeDebug = !physics->quadTreeDebug;
+	Debug::Print("F8 to toggle static quad tree.", Vector2(10, i++ * offset));
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) physics->staticTreeDebug = !physics->staticTreeDebug;
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
 		useGravity = !useGravity; //Toggle gravity!

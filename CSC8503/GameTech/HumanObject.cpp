@@ -14,7 +14,8 @@ NCL::CSC8503::HumanObject::HumanObject(string n, Tag t) : GameObject(n, t)
 
 void NCL::CSC8503::HumanObject::UpdateDistance()
 {
-	distance = 10000000000.0f;
+	focusPlayer = *HumanObject::firstPlayer;
+	/*distance = 10000000000.0f;
 	for (auto i = HumanObject::firstPlayer; i != HumanObject::lastPlayer; i++)
 	{
 		float tempDis = ((*i)->GetTransform().GetWorldPosition() - GetTransform().GetWorldPosition()).Length();
@@ -23,7 +24,7 @@ void NCL::CSC8503::HumanObject::UpdateDistance()
 			distance = tempDis;
 			focusPlayer = (GooseObject*)* i;
 		}
-	}
+	}*/
 }
 
 void NCL::CSC8503::HumanObject::OnCollisionBegin(GameObject* otherObject)

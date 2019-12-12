@@ -11,7 +11,7 @@ void NCL::CSC8503::AppleObject::OnCollisionBegin(GameObject* otherObject)
 			goose->PickApple(this);
 			float distance = (this->transform.GetWorldPosition() - goose->GetTransform().GetWorldPosition()).Length();
 
-			constraint = new PositionConstraint(this, otherObject, distance); // TODO new Constraint help the apple stay at front
+			constraint = new FrontPositionConstraint(otherObject, this, distance); // TODO new Constraint help the apple stay at front
 			world->AddConstraint(constraint);
 		}
 	}

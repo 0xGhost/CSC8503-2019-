@@ -123,7 +123,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		//	return;
 		//}
 
-		Debug::DrawLine(watcherPos, playerPos, Vector4(0, 1, 1, 1));
+		//Debug::DrawLine(watcherPos, playerPos, Vector4(0, 1, 1, 1));
 
 		Vector3 direction = playerPos - watcherPos;
 
@@ -173,7 +173,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 
-		Debug::DrawLine(watcherPos, playerPos, Vector4(0, 1, 1, 1));
+		//Debug::DrawLine(watcherPos, playerPos, Vector4(0, 1, 1, 1));
 
 		Vector3 direction = playerPos - watcherPos;
 
@@ -213,7 +213,7 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 					superState = 1;
 				}
 			}
-			Debug::DrawLine(watcherPos, playerPos);
+			//Debug::DrawLine(watcherPos, playerPos);
 		}
 	};
 
@@ -329,5 +329,5 @@ void NCL::CSC8503::ChaserObject::InitOriginPosition()
 
 void NCL::CSC8503::ChaserObject::Movement(Vector3 direction, float force)
 {
-	physicsObject->AddForceAtLocalPosition(direction.Normalised() * force, transform.GetForward() * 0.1);
+	physicsObject->AddForceAtLocalPosition(direction.Normalised() * force, transform.GetForward() * 1.5f);
 }

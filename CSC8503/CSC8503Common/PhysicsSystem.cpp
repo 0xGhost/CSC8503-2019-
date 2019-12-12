@@ -360,9 +360,10 @@ void PhysicsSystem::BroadPhase() {
 			}
 		}
 	});
-
-	//quadTree->DebugDraw(Vector4(0.9f,0.2f,0.5f,1));
-	//staticQuadTree->DebugDraw(Vector4(0.7f, 0.5f, 0.2f, 1));
+	if(quadTreeDebug)
+		quadTree->DebugDraw(Vector4(0.9f,0.2f,0.5f,1));
+	if(staticTreeDebug)
+		staticQuadTree->DebugDraw(Vector4(0.7f, 0.5f, 0.2f, 1));
 }
 
 /*
