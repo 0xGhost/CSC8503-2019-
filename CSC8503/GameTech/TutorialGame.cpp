@@ -527,8 +527,8 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 			Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
 				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 			timeLeft -= dt;
 			obstancleCDTime += dt;
@@ -607,13 +607,13 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
 				" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
 				" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
-				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Vector2(10, renderer->GetWindowSize().y - 120), Vector4(0.1f, 0.1f, 0.1f, 1));
 			Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
 				" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
-				Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(L)ock goose", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Vector2(10, renderer->GetWindowSize().y - 160), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x * 0.65, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x * 0.65, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(L)ock goose", Vector2(renderer->GetWindowSize().x * 0.65, renderer->GetWindowSize().y - 120), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 			SelectObject();
 			world->UpdateWorld(dt);
@@ -701,7 +701,7 @@ void TutorialGame::UpdateGame(float dt) {
 	gameStateManager.Update();
 
 
-	if (isDebuging)
+	/*if (isDebuging)
 	{
 		if (!inSelectionMode) {
 			world->GetMainCamera()->UpdateCamera(dt);
@@ -721,10 +721,10 @@ void TutorialGame::UpdateGame(float dt) {
 		Debug::Print("cam pos:" + std::to_string((int)world->GetMainCamera()->GetPosition().x) +
 			" " + std::to_string((int)world->GetMainCamera()->GetPosition().y) +
 			" " + std::to_string((int)world->GetMainCamera()->GetPosition().z),
-			Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 		Debug::Print("cam pitch:" + std::to_string((int)world->GetMainCamera()->GetPitch()) +
 			" yaw:" + std::to_string((int)world->GetMainCamera()->GetYaw()),
-			Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Vector2(10, renderer->GetWindowSize().y - 120), Vector4(0.1f, 0.1f, 0.1f, 1));
 		Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
 			Vector2(800, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
 
@@ -733,7 +733,7 @@ void TutorialGame::UpdateGame(float dt) {
 			EditSelectedObject();
 		else
 			MoveSelectedObject();
-	}
+	}*/
 	//world->UpdateWorld(dt);
 
 	renderer->Update(dt);
@@ -746,7 +746,7 @@ void TutorialGame::UpdateGame(float dt) {
 }
 
 void TutorialGame::UpdateKeys() {
-	int offset = 20;
+	int offset = 40;
 	int i = 4;
 	Debug::Print("F1 to reset world. F2 to reset camera.", Vector2(10, i++ * offset));
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
@@ -1007,15 +1007,15 @@ bool TutorialGame::SelectObject() {
 
 	if (selectionObject) {
 		Debug::Print("ID:" + std::to_string(selectionObject->GetID()) + " name:" + selectionObject->GetName(),
-			Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 
-		Debug::Print(" pos:" + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().x) +
+		Debug::Print("pos:" + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().x) +
 			" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().y) +
 			" " + std::to_string((int)selectionObject->GetTransform().GetWorldPosition().z) +
 			" rot:" + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().x) +
 			" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().y) +
 			" " + std::to_string((int)selectionObject->GetTransform().GetWorldOrientation().ToEuler().z)
-			, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			, Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 	}
 
@@ -1095,14 +1095,14 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 		return;// we haven ’t selected anything !
 	}
 	int offset = 40;
-	int i = 1;
-	Debug::Print("N:Low", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("H:High", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("I:Watcher", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("K:Keeper", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("J:Goose", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("U:Water", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("O:Apple", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	int i = 6;
+	Debug::Print("N:Low", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("H:High", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("I:Watcher", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("K:Keeper", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("J:Goose", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("U:Water", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("O:Apple", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
 	//Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.2, 0.2, 0.2, 0.9));
 	//Debug::Print("J:Goose U:Water O:Apple", Vector2(renderer->GetWindowSize().x - 300, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
