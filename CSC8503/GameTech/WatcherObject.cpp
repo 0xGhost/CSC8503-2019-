@@ -15,6 +15,9 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 		HumanObject::UpdateDistance();
 		this->GetPhysicsObject()->AddTorque(Vector3(0, 50, 0));
 		this->GetRenderObject()->SetColour(Vector4(0.3, 0.9, 0.9, 1));
+		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
+		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
+		distance = (watcherPos - playerPos).Length();
 	};
 
 	StateFunc aimFunc = [&]()

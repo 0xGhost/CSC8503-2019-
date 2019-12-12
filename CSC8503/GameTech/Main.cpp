@@ -169,7 +169,7 @@ hide or show the
 */
 int main() {
 	Window* w = Window::CreateGameWindow("Arknights Simulator!", 1920, 1200, true);
-	//Window* w = Window::CreateGameWindow("Arknights Simulator!", 1280, 720);
+	//Window* w = Window::CreateGameWindow("Arknights Simulator!", 1280, 800);
 	if (!w->HasInitialised()) {
 		return -1;
 	}

@@ -372,7 +372,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			if (server)
 			{
 				server->UpdateServer();
-				Debug::Print("Server Lobby  Press F1 to start", Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("Server Lobby  Press F1 to start", Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 				string s = "| PlayerS";
 				//server->SendGlobalPacket(StringPacket("Server says hello !"));
@@ -382,7 +382,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 					s += " | Player" + std::to_string(clientsID[i]);
 				}
 				server->SendGlobalPacket(StringPacket(s));
-				Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 				if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
 				{
@@ -414,11 +414,11 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			{
 				client->UpdateClient();
 
-				Debug::Print("Client Lobby  You are Player" + std::to_string(client->GetID()), Vector2(10, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("Client Lobby  You are Player" + std::to_string(client->GetID()), Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 				string s = packetReceiver->GetNextString();
 				if (!s.empty())
 				{
-					Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+					Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 				}
 
 				if (packetReceiver->MapReady())
@@ -442,9 +442,9 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				Debug::Print("time:" + std::to_string((int)timeLeft),
 					Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 				Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
-					Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+					Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 				//Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
-				Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x * 0.65f, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 				timeLeft -= dt;
 				obstancleCDTime += dt;
@@ -487,7 +487,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				Debug::Print("time:" + std::to_string((int)timeLeft),
 					Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 				Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
-					Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
+					Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 				//Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 20), Vector4(0.1f, 0.1f, 0.1f, 1));
 				Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 
@@ -526,9 +526,9 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("time:" + std::to_string((int)timeLeft),
 				Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
 			Debug::Print("score:" + std::to_string((*players.begin())->GetScore()),
-				Vector2(10, renderer->GetWindowSize().y - 60), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x - 220, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
-			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x - 420, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+				Vector2(10, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(P)ause", Vector2(renderer->GetWindowSize().x * 0.65f, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
+			Debug::Print("(B)ack to menu", Vector2(renderer->GetWindowSize().x * 0.65f, renderer->GetWindowSize().y - 80), Vector4(0.1f, 0.1f, 0.1f, 1));
 
 			timeLeft -= dt;
 			obstancleCDTime += dt;
@@ -1096,13 +1096,14 @@ void NCL::CSC8503::TutorialGame::EditSelectedObject()
 	}
 	int offset = 40;
 	int i = 6;
-	Debug::Print("N:Low", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("H:High", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("I:Watcher", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("K:Keeper", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("J:Goose", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("U:Water", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
-	Debug::Print("O:Apple", Vector2(renderer->GetWindowSize().x * 0.6, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	float xOffset = 0.75f;
+	Debug::Print("N:Low", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("H:High", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("I:Watcher", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("K:Keeper", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("J:Goose", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("U:Water", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
+	Debug::Print("O:Apple", Vector2(renderer->GetWindowSize().x * xOffset, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.5, 0.5, 0.5, 0.9));
 	//Debug::Print("N:Low H:High I:Watcher K:Keeper ", Vector2(renderer->GetWindowSize().x - 300, renderer->GetWindowSize().y - (i++) * offset), Vector4(0.2, 0.2, 0.2, 0.9));
 	//Debug::Print("J:Goose U:Water O:Apple", Vector2(renderer->GetWindowSize().x - 300, 60), Vector4(0.2, 0.2, 0.2, 0.9));
 	Vector3 pos = selectionObject->GetTransform().GetWorldPosition();
@@ -1211,8 +1212,14 @@ void TutorialGame::InitCamera() {
 }
 
 void TutorialGame::InitWorld() {
+
+	cout << "init" << endl;
 	world->ClearAndErase();
 	physics->Clear();
+
+	//return;
+
+
 #if 1 // coursework
 	GameObject::ResetID();
 	physics->SetLayerCollision(2, 2, false); // cube - cube
@@ -1241,6 +1248,7 @@ void TutorialGame::InitWorld() {
 	//int* mapTemp = mapTiles;
 	players.clear();
 	lowGrounds.clear();
+	freeBalls.clear();
 	for (int x = 0; x < mapSize.x; x++)
 	{
 		for (int z = 0; z < mapSize.y; z++)
@@ -1261,6 +1269,7 @@ void TutorialGame::InitWorld() {
 	physics->UseGravity(true);
 	obstancleCDTime = obstancleTime;
 	timeLeft = totalTime;
+	world->UpdateWorld(dt);
 #else
 	BridgeConstraintTest();
 	//InitMixedGridWorld(10, 10, 6.0f, 6.0f);
