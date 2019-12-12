@@ -26,7 +26,7 @@ TutorialGame::TutorialGame() {
 	renderer = new GameTechRenderer(*world);
 	physics = new PhysicsSystem(*world);
 	physics->InitLayerCollisionMatrix(true);
-	totalTime = 20;
+	totalTime = 180;
 	obstancleTime = 10;
 	forceMagnitude = 100.0f;
 	isPlaying = false;
@@ -114,9 +114,9 @@ void NCL::CSC8503::TutorialGame::SaveMapData(const string& fileName) throw (inva
 void NCL::CSC8503::TutorialGame::LoadMap()
 {
 	cout << "Enter the map name to load: ";
-	string fileName = "20map1";
-	//string fileName;
-	//cin >> fileName;
+	//string fileName = "20map1";
+	string fileName;
+	cin >> fileName;
 	try
 	{
 		LoadMapData(fileName);

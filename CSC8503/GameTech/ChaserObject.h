@@ -31,6 +31,7 @@ namespace NCL {
 			float walkForce = 100;
 			float runForce = 160;
 			int state;
+			int superState;
 			ChaserFunc getPath;
 			//GameObject *playerObject;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include "StateMachine.h"
 namespace NCL {
 	namespace CSC8503 {
 		class State		{
@@ -11,35 +12,45 @@ namespace NCL {
 
 		//typedef void(*StateFunc)(void*);
 
-		typedef std::function<void(void*)> StateFunc;
+		typedef std::function<void()> StateFunc;
 		
 
 		class GenericState : public State		{
 		public:
-			GenericState(StateFunc someFunc, void* someData) {
+			GenericState(StateFunc someFunc) {
 				func		= someFunc;
-				funcData	= someData;
+				//funcData	= someData;
 			}
 			virtual void Update() {
-				if (funcData != nullptr) {
-					func(funcData);
-				}
+				//if (funcData != nullptr) {
+					func();
+				//}
 			}
 		protected:
 			StateFunc func;
-			void* funcData;
+			//void* funcData;
 		};
 
-		typedef std::function<void()> StateFunc2;
-		class State2 : State {
+		//typedef std::function<void()> SuperStateFunc;
+		
+		class SuperState : public State {
 		public:
-			State2(StateFunc2 f)
+			SuperState(StateFunc f, StateMachine *s)
 			{
 				func = f;
+				stateMachine = s;
 			}
-			virtual void Update() { func(); } //Pure virtual base class
+			virtual void Update() {
+				func(); 
+				if(stateMachine)
+				stateMachine->Update();
+			}
+
 		protected:
-			StateFunc2 func;
+			StateFunc func;
+			StateMachine *stateMachine;
 		};
+
+
 	}
 }

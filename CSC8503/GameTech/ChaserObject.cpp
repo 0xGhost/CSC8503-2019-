@@ -2,21 +2,35 @@
 #include "../CSC8503Common/PhysicsSystem.h"
 #include "GooseObject.h"
 
+
+
 ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 {
 	searchDistance = 50;
 	detectionDistance = 30;
 	stateMachine = new StateMachine();
 	state = 0;
-	// TODO: superState that contain a stateMachine
-	StateFunc idleFunc = [&](void* data)
+	superState = 0;
+	
+	StateFunc idleFunc = [&]()
 	{
-		int* state = (int*)data;
-		HumanObject::UpdateDistance();
+		//int* state = (int*)data;
+		//HumanObject::UpdateDistance();
 		this->GetPhysicsObject()->AddTorque(Vector3(0, -50, 0));
 		this->GetRenderObject()->SetColour(Vector4(0.3f, 0.9f, 0.9f, 1));
+		
+		Vector3 opos(originPosition.x, 0, originPosition.z);
+		Vector3 ppos = this->GetTransform().GetWorldPosition();
+		ppos.y = 0;
+		float distance = (opos - ppos).Length();
 
-		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
+		if (distance > 5.0f)
+		{
+			state = 3;
+			return;
+		}
+
+		/*Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 		Vector3 rayDir = playerPos - watcherPos;
 		distance = (watcherPos - playerPos).Length();
@@ -30,16 +44,16 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 					&& ((GooseObject*)closestCollision.node)->CheckApple())
 				{
-					*state = 1;
+					state = 1;
 				}
 			}
 			Debug::DrawLine(watcherPos, playerPos);
-		}
+		}*/
 	};
 
-	StateFunc returnFunc = [&](void* data)
+	StateFunc returnFunc = [&]()
 	{
-		int* state = (int*)data;
+		//int* state = (int*)data;
 		this->GetRenderObject()->SetColour(Vector4(0.2f, 0.9f, 0.2f, 1));
 		Vector3 opos(originPosition.x, 0, originPosition.z);
 		Vector3 ppos = this->GetTransform().GetWorldPosition();
@@ -48,26 +62,26 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 		if (distance < 0.2f)
 		{
-			*state = 0;
+			state = 0;
 			return;
 		}
 
-		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
-		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
-		Vector3 direction = playerPos - watcherPos;
+		//Vector3 watcherPos = this->GetTransform().GetWorldPosition();
+		//Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
+		//Vector3 direction = playerPos - watcherPos;
 
-		RayCollision closestCollision;
-		Ray ray(watcherPos, direction.Normalised());
+		//RayCollision closestCollision;
+		//Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true,  rayCastLayerMask))
-		{
-			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
-				&& ((GooseObject*)closestCollision.node)->CheckApple())
-			{
-				*state = 1;
-				return;
-			}
-		}
+		//if (physics->Raycast(ray, closestCollision, true, rayCastLayerMask))
+		//{
+		//	if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
+		//		&& ((GooseObject*)closestCollision.node)->CheckApple())
+		//	{
+		//		state = 1;
+		//		return;
+		//	}
+		//}
 		path.Clear();
 		getPath(originPosition, this);
 
@@ -95,19 +109,19 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 	};
 
-	StateFunc searchFunc = [&](void* data)
+	StateFunc searchFunc = [&]()
 	{
 		this->GetRenderObject()->SetColour(Vector4(0.5f, 0.5f, 0.0f, 1));
 
-		int* state = (int*)data;
+		//int* state = (int*)data;
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
-		float distance = (watcherPos - playerPos).Length();
-		if (distance > searchDistance || !focusPlayer->CheckApple())
-		{
-			*state = 3;
-			return;
-		}
+		//float distance = (watcherPos - playerPos).Length();
+		//if (distance > searchDistance || !focusPlayer->CheckApple())
+		//{
+		//	state = 3;
+		//	return;
+		//}
 
 		Debug::DrawLine(watcherPos, playerPos, Vector4(0, 1, 1, 1));
 
@@ -116,12 +130,12 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true,  rayCastLayerMask))
+		if (physics->Raycast(ray, closestCollision, true, rayCastLayerMask))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
 				&& ((GooseObject*)closestCollision.node)->CheckApple())
 			{
-				*state = 1;
+				state = 1;
 			}
 		}
 		path.Clear();
@@ -151,11 +165,11 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 
 	};
 
-	StateFunc chaseFunc = [&](void* data)
+	StateFunc chaseFunc = [&]()
 	{
 		this->GetRenderObject()->SetColour(Vector4(0.9f, 0.0f, 0.0f, 1));
 
-		int* state = (int*)data;
+		//int* state = (int*)data;
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 
@@ -166,12 +180,12 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		RayCollision closestCollision;
 		Ray ray(watcherPos, direction.Normalised());
 
-		if (physics->Raycast(ray, closestCollision, true,  rayCastLayerMask))
+		if (physics->Raycast(ray, closestCollision, true, rayCastLayerMask))
 		{
 			if (((GameObject*)closestCollision.node)->GetTag() != PlayerTag
 				|| !((GooseObject*)closestCollision.node)->CheckApple())
 			{
-				*state = 2;
+				state = 2;
 			}
 		}
 		direction.y = 0;
@@ -179,21 +193,85 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 		this->Movement(direction, runForce);
 	};
 
-	GenericState* idleState = new GenericState(idleFunc, &state);
-	GenericState* searchState = new GenericState(searchFunc, &state);
-	GenericState* chaseState = new GenericState(chaseFunc, &state);
-	GenericState* returnState = new GenericState(returnFunc, &state);
+	StateFunc defenseFunc = [&]()
+	{
+		HumanObject::UpdateDistance(); //  TODO: move to main update just do it once!
+		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
+		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
+		Vector3 rayDir = playerPos - watcherPos;
+		distance = (watcherPos - playerPos).Length();
+		if (distance < detectionDistance)
+		{
+			RayCollision closestCollision;
+			Ray ray(watcherPos, rayDir.Normalised());
+
+			if (physics->Raycast(ray, closestCollision, true, rayCastLayerMask))
+			{
+				if (((GameObject*)closestCollision.node)->GetTag() == PlayerTag
+					&& ((GooseObject*)closestCollision.node)->CheckApple())
+				{
+					superState = 1;
+				}
+			}
+			Debug::DrawLine(watcherPos, playerPos);
+		}
+	};
 
 
-	stateMachine->AddState(idleState);
+	StateFunc offenseFunc = [&]()
+	{
+		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
+		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
+		float distance = (watcherPos - playerPos).Length();
+		if (distance > searchDistance || !focusPlayer->CheckApple())
+		{
+			superState = 0;
+			state = 3;
+		}
+	};
+
+
+	GenericState* idleState = new GenericState(idleFunc);
+	GenericState* searchState = new GenericState(searchFunc);
+	GenericState* chaseState = new GenericState(chaseFunc);
+	GenericState* returnState = new GenericState(returnFunc);
+
+	StateMachine* defenseSubStateMachine = new StateMachine();
+	StateMachine* offenseSubStateMachine = new StateMachine();
+
+	defenseSubStateMachine->AddState(returnState);
+	defenseSubStateMachine->AddState(idleState);
+	offenseSubStateMachine->AddState(chaseState);
+	offenseSubStateMachine->AddState(searchState);
+
+
+
+	SuperState* defenseSuperState = new SuperState(defenseFunc, defenseSubStateMachine);
+	SuperState* offenseSuperState = new SuperState(offenseFunc, offenseSubStateMachine);
+
+	stateMachine->AddState(defenseSuperState);
+	stateMachine->AddState(offenseSuperState);
+
+
+	/*stateMachine->AddState(idleState);
 	stateMachine->AddState(searchState);
 	stateMachine->AddState(chaseState);
-	stateMachine->AddState(returnState);
+	stateMachine->AddState(returnState);*/
 
-	GenericTransition <int&, int>* transition0to1 =
+	GenericTransition<int& , int>* superTransition0to1 = 
 		new GenericTransition <int&, int>(
 			GenericTransition <int&, int>::EqualsTransition,
-			state, 1, idleState, chaseState);
+			superState, 1, defenseSuperState, offenseSuperState);
+
+	GenericTransition<int&, int>* superTransition1to0 =
+		new GenericTransition <int&, int>(
+			GenericTransition <int&, int>::EqualsTransition,
+			superState, 0, offenseSuperState, defenseSuperState);
+
+	//GenericTransition <int&, int>* transition0to1 =
+	//	new GenericTransition <int&, int>(
+	//		GenericTransition <int&, int>::EqualsTransition,
+	//		state, 1, idleState, chaseState);
 
 	GenericTransition <int&, int>* transition1to2 =
 		new GenericTransition <int&, int>(
@@ -205,29 +283,43 @@ ChaserObject::ChaserObject(string name, Tag tag) :HumanObject(name, tag)
 			GenericTransition <int&, int>::EqualsTransition,
 			state, 1, searchState, chaseState);
 
-	GenericTransition <int&, int>* transition2to3 =
-		new GenericTransition <int&, int>(
-			GenericTransition <int&, int>::EqualsTransition,
-			state, 3, searchState, returnState);
+	//GenericTransition <int&, int>* transition2to3 =
+	//	new GenericTransition <int&, int>(
+	//		GenericTransition <int&, int>::EqualsTransition,
+	//		state, 3, searchState, returnState);
 
 	GenericTransition <int&, int>* transition3to0 =
 		new GenericTransition <int&, int>(
 			GenericTransition <int&, int>::EqualsTransition,
 			state, 0, returnState, idleState);
 
-	GenericTransition <int&, int>* transition3to1 =
+	GenericTransition <int&, int>* transition0to3 =
 		new GenericTransition <int&, int>(
 			GenericTransition <int&, int>::EqualsTransition,
-			state, 1, returnState, chaseState);
+			state, 3, idleState, returnState);
 
+	//GenericTransition <int&, int>* transition3to1 =
+	//	new GenericTransition <int&, int>(
+	//		GenericTransition <int&, int>::EqualsTransition,
+	//		state, 1, returnState, chaseState);
 
+	stateMachine->AddTransition(superTransition0to1);
+	stateMachine->AddTransition(superTransition1to0);
 
-	stateMachine->AddTransition(transition0to1);
+	defenseSubStateMachine->AddTransition(transition3to0);
+	defenseSubStateMachine->AddTransition(transition0to3);
+	offenseSubStateMachine->AddTransition(transition1to2);
+	offenseSubStateMachine->AddTransition(transition2to1);
+
+	/*stateMachine->AddTransition(transition0to1);
 	stateMachine->AddTransition(transition1to2);
 	stateMachine->AddTransition(transition2to1);
 	stateMachine->AddTransition(transition2to3);
 	stateMachine->AddTransition(transition3to0);
-	stateMachine->AddTransition(transition3to1);
+	stateMachine->AddTransition(transition3to1);*/
+
+
+
 }
 
 void NCL::CSC8503::ChaserObject::InitOriginPosition()

@@ -8,7 +8,7 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 	detectionDistance = 30;
 	stateMachine = new StateMachine();
 
-	StateFunc idleFunc = [&](void* data)
+	StateFunc idleFunc = [&]()
 	{
 		//Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		//Vector3 playerPos = (*Human::firstPlayer)->GetTransform().GetWorldPosition();
@@ -17,20 +17,20 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 		this->GetRenderObject()->SetColour(Vector4(0.3, 0.9, 0.9, 1));
 	};
 
-	StateFunc aimFunc = [&](void* data)
+	StateFunc aimFunc = [&]()
 	{
 
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 		distance = (watcherPos - playerPos).Length();
-		Debug::DrawLine(watcherPos, playerPos, Vector4(0,1,1,1));
+		//Debug::DrawLine(watcherPos, playerPos, Vector4(0,1,1,1));
 		Vector3 rayDir = playerPos - watcherPos;
-		playerPos = playerPos + focusPlayer->GetPhysicsObject()->GetLinearVelocity() * distance / 100;
+		playerPos = playerPos + focusPlayer->GetPhysicsObject()->GetLinearVelocity() * distance / 70;
 		Vector3 direction = playerPos - watcherPos;
 
 		direction.y = 0;
 		Vector3 torque = Vector3::Cross(this->GetTransform().GetForward(), -direction.Normalised());
-		this->GetPhysicsObject()->AddTorque(torque * 50);
+		this->GetPhysicsObject()->AddTorque(torque * 100);
 
 		RayCollision closestCollision;
 		Ray ray(watcherPos, rayDir.Normalised());
@@ -50,13 +50,12 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 				this->GetRenderObject()->SetColour(Vector4(0.9f, 0.5f, 0.0f, 1));
 			}
 		}
-		Debug::DrawLine(watcherPos, playerPos);
+		//Debug::DrawLine(watcherPos, playerPos);
 		
 	};
 
-	StateFunc attackFunc = [&](void* data)
+	StateFunc attackFunc = [&]()
 	{
-		// TODO: throw a ball
 		Vector3 watcherPos = this->GetTransform().GetWorldPosition();
 		Vector3 playerPos = focusPlayer->GetTransform().GetWorldPosition();
 		playerPos = playerPos + focusPlayer->GetPhysicsObject()->GetLinearVelocity() * distance / 100;
@@ -66,9 +65,9 @@ WatcherObject::WatcherObject(string name, Tag tag) :HumanObject(name, tag)
 		ready = 5;
 	};
 
-	GenericState* idleState = new GenericState(idleFunc, this);
-	GenericState* aimState = new GenericState(aimFunc, this);
-	GenericState* attackState = new GenericState(attackFunc, this);
+	GenericState* idleState = new GenericState(idleFunc);
+	GenericState* aimState = new GenericState(aimFunc);
+	GenericState* attackState = new GenericState(attackFunc);
 
 
 	stateMachine->AddState(idleState);
