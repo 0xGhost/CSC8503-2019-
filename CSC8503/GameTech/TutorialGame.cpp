@@ -154,6 +154,8 @@ char NCL::CSC8503::TutorialGame::GetKeyBoardInput()
 		return (int)key - (int)KeyboardKeys::A + 'A';
 	else if (key >= KeyboardKeys::NUM0 && key <= KeyboardKeys::NUM9)
 		return (int)key - (int)KeyboardKeys::NUM0 + '0';
+	if (key == KeyboardKeys::BACK)
+		return 0;
 	return -1;
 }
 
@@ -262,6 +264,8 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			char ch = GetKeyBoardInput();
 			if (ch > 0)
 				userInput += ch;
+			if (ch == 0)
+				userInput.resize(userInput.size() - 1);
 			Debug::Print(userInput, Vector2(10, renderer->GetWindowSize().y / 2), Vector4(0, 0, 0, 1));
 
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::RETURN))
