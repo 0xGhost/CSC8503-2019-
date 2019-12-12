@@ -181,6 +181,13 @@ namespace NCL {
 			return (KeyDown(key) && !KeyHeld(key));
 		}
 
+		KeyboardKeys GetKeyPressed()
+		{
+			KeyboardKeys k = lastKeyPressed;
+			lastKeyPressed = KeyboardKeys::MAXVALUE;
+			return k;
+		}
+
 	protected:
 		Keyboard();
 		virtual ~Keyboard() {}
@@ -193,5 +200,6 @@ namespace NCL {
 		bool isAwake;
 		bool keyStates[(int)KeyboardKeys::MAXVALUE];		//Is the key down?
 		bool holdStates[(int)KeyboardKeys::MAXVALUE];		//Has the key been down for multiple updates?
+		KeyboardKeys lastKeyPressed;
 	};
 }

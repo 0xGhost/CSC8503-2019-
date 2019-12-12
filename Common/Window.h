@@ -61,7 +61,7 @@ namespace NCL {
 		virtual void	SetConsolePosition(int x, int y) {};
 		virtual void	ShowConsole(bool state) {};
 
-		static const Keyboard*	 GetKeyboard() { return keyboard; }
+		static Keyboard*	 GetKeyboard() { return keyboard; }
 		static const Mouse*		 GetMouse() { return mouse; }
 		static const GameTimer*	 GetTimer() { return timer; }
 

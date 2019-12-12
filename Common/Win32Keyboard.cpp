@@ -27,6 +27,10 @@ void Win32Keyboard::UpdateRAW(RAWINPUT* raw)	{
 
 		//First bit of the flags tag determines whether the key is down or up
 		keyStates[(int)key] = !(raw->data.keyboard.Flags & RI_KEY_BREAK);
+		if (keyStates[(int)key])
+		{
+			lastKeyPressed = (KeyboardKeys)key;
+		}
 	}
 }
 

@@ -116,7 +116,8 @@ void NCL::CSC8503::TutorialGame::LoadMap()
 	cout << "Enter the map name to load: ";
 	//string fileName = "20map1";
 	string fileName;
-	cin >> fileName;
+	//cin >> fileName;
+	fileName = userInput;
 	try
 	{
 		LoadMapData(fileName);
@@ -124,7 +125,7 @@ void NCL::CSC8503::TutorialGame::LoadMap()
 		selectionObject = nullptr;
 		std::cout << "Map load successful." << endl;
 	}
-	catch (const invalid_argument & iae)
+	catch (const invalid_argument& iae)
 	{
 		std::cout << "Unable to read data : " << iae.what() << "\n";
 	}
@@ -140,10 +141,28 @@ void NCL::CSC8503::TutorialGame::SaveMap()
 		SaveMapData(fileName);
 		std::cout << "Map save successful." << endl;
 	}
-	catch (const invalid_argument & iae)
+	catch (const invalid_argument& iae)
 	{
 		std::cout << "Unable to write data : " << iae.what() << "\n";
 	}
+}
+
+char NCL::CSC8503::TutorialGame::GetKeyBoardInput()
+{
+	KeyboardKeys key = Window::GetKeyboard()->GetKeyPressed();
+	if (key >= KeyboardKeys::A && key <= KeyboardKeys::Z)
+		return (int)key - (int)KeyboardKeys::A + 'A';
+	else if (key >= KeyboardKeys::NUM0 && key <= KeyboardKeys::NUM9)
+		return (int)key - (int)KeyboardKeys::NUM0 + '0';
+	return -1;
+}
+
+int NCL::CSC8503::TutorialGame::GetKeyBoardNumber()
+{
+	KeyboardKeys key = Window::GetKeyboard()->GetKeyPressed();
+	if (key >= KeyboardKeys::NUM0 && key <= KeyboardKeys::NUM9)
+		return (int)key - (int)KeyboardKeys::NUM0;
+	return -1;
 }
 
 /*
@@ -185,13 +204,21 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("F2 to start a multi-player game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("F3 to enter edit and debug mode", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
-
+			/*
+			char ch = GetKeyBoardInput();
+			if(ch>0)
+				userInput += ch;
+			Debug::Print(userInput, Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
+			*/
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
 			{
-				LoadMap();
-				InitWorld();
+
+
+				//LoadMap();
+				//InitWorld();
 				//isPlaying = true;
-				*pushResult = inGameState;
+				inputInstructions = "Enter the map name to load: ";
+				*pushResult = userInputState;
 				//pushResult = &selectMapMenu;
 				return Push;
 			}
@@ -210,12 +237,43 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				*pushResult = editModeState;
 				return Push;
 			}
+			if (inputFinish)
+			{
+				inputFinish = false;
+				LoadMap();
+				InitWorld();
+				//isPlaying = true;
+				*pushResult = inGameState;
+				//pushResult = &selectMapMenu;
+				return Push;
+			}
 			return NoChange;
 		});
 	mainMenu->SetAwakeFunc([&]()
 		{
 			world->ClearAndErase();
 			physics->Clear();
+		});
+
+	userInputState = new PushdownState([&](PushdownState** pushResult)
+		{
+			Debug::Print(inputInstructions, Vector2(10, renderer->GetWindowSize().y / 2 + 40), Vector4(0, 0, 0, 1));
+
+			char ch = GetKeyBoardInput();
+			if (ch > 0)
+				userInput += ch;
+			Debug::Print(userInput, Vector2(10, renderer->GetWindowSize().y / 2), Vector4(0, 0, 0, 1));
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::RETURN))
+			{
+				inputFinish = true;
+				return Pop;
+			}
+			return NoChange;
+		});
+	userInputState->SetAwakeFunc([&]
+		{
+			userInput.clear();
 		});
 
 	multiplayerMenu = new PushdownState([&](PushdownState** pushResult)
@@ -292,15 +350,15 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 		});
 	multiplayerMenu->SetAwakeFunc([&]() {
 		if (server) {
-			delete server; 
+			delete server;
 			server = nullptr;
 		}
 		if (client) {
-			delete client; 
+			delete client;
 			client = nullptr;
 		}
 		if (packetReceiver) {
-			delete packetReceiver; 
+			delete packetReceiver;
 			packetReceiver = nullptr;
 		}
 		});
@@ -321,16 +379,30 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				}
 				server->SendGlobalPacket(StringPacket(s));
 				Debug::Print(s, Vector2(10, renderer->GetWindowSize().y - 40), Vector4(0.1f, 0.1f, 0.1f, 1));
-				
+
 				if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1))
 				{
-					LoadMap();
+					inputInstructions = "Enter the map name to load: ";
+					*pushResult = userInputState;
+					/*LoadMap();
 					server->SendGlobalPacket(MapPacket(mapTiles, mapSize.x, mapSize.y));
 					server->UpdateServer();
 					InitWorld();
 
-					
+
+					*pushResult = multiplayerInGameState;*/
+					return Push;
+				}
+				if (inputFinish)
+				{
+					inputFinish = false;
+					LoadMap();
+					server->SendGlobalPacket(MapPacket(mapTiles, mapSize.x, mapSize.y));
+					server->UpdateServer();
+					InitWorld();
+					//isPlaying = true;
 					*pushResult = multiplayerInGameState;
+					//pushResult = &selectMapMenu;
 					return Push;
 				}
 			}
@@ -353,7 +425,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 					return Push;
 				}
 			}
-			
+
 
 			return NoChange;
 		}
@@ -584,7 +656,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 				server->UpdateServer();
 				Debug::Print(finalStr, Vector2(renderer->GetWindowSize().x / 2 - 620, renderer->GetWindowSize().y / 2 - 80), Vector4(0, 0, 0, 1));
 			}
-			else if(client)
+			else if (client)
 			{
 				client->UpdateClient();
 				string s = packetReceiver->GetNextString();
@@ -605,7 +677,7 @@ void NCL::CSC8503::TutorialGame::InitMenuMachine()
 			Debug::Print("B to back to main menu", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 			Debug::Print("ESC to exit the game", Vector2(10, renderer->GetWindowSize().y - (i++) * offset), Vector4(0, 0, 0, 1));
 
-			
+
 
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B))
 			{
@@ -692,7 +764,7 @@ void TutorialGame::UpdateKeys() {
 			SaveMapData(fileName);
 			std::cout << "Map save successful." << endl;
 		}
-		catch (const invalid_argument & iae)
+		catch (const invalid_argument& iae)
 		{
 			std::cout << "Unable to write data : " << iae.what() << "\n";
 		}
@@ -709,7 +781,7 @@ void TutorialGame::UpdateKeys() {
 			selectionObject = nullptr;
 			std::cout << "Map load successful. Press F1 to use new map" << endl;
 		}
-		catch (const invalid_argument & iae)
+		catch (const invalid_argument& iae)
 		{
 			std::cout << "Unable to read data : " << iae.what() << "\n";
 		}
@@ -987,15 +1059,15 @@ bool TutorialGame::SelectObject() {
 				{
 					GameObject* seeingObject = (GameObject*)closestCollision1.node;
 					seeingObject->GetRenderObject()->SetColour(Vector4(0, 0, 1, 1));
-				}
+			}
 				selectionObject->SetLayer(layer);
 #endif
 				return true;
-			}
+		}
 			else {
 				return false;
 			}
-		}
+	}
 		/*if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
 			if (selectionObject) {
 				if (lockedObject == selectionObject) {
@@ -1006,7 +1078,7 @@ bool TutorialGame::SelectObject() {
 				}
 			}
 		}*/
-			}
+}
 	else {
 		renderer->DrawString("Press Q to change to select mode!", Vector2(10, 0));
 	}
@@ -1123,7 +1195,7 @@ void TutorialGame::MoveSelectedObject() {
 		selectionObject->GetPhysicsObject()->AddForce(Vector3(0, -1, 0) * forceMagnitude * dt);
 	}
 #endif
-}
+			}
 
 void TutorialGame::InitCamera() {
 	world->GetMainCamera()->SetNearPlane(0.5f);
@@ -1132,7 +1204,7 @@ void TutorialGame::InitCamera() {
 	world->GetMainCamera()->SetYaw(315.0f);
 	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
 	lockedObject = nullptr;
-	}
+}
 
 void TutorialGame::InitWorld() {
 	world->ClearAndErase();

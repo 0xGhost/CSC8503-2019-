@@ -69,6 +69,8 @@ namespace NCL {
 			void LoadMap();
 			void SaveMap();
 			int IndexOf(int x, int y) { return x * mapSize.y + y; }
+			char GetKeyBoardInput();
+			int GetKeyBoardNumber();
 
 			void InitialiseAssets();
 			void InitMenuMachine();
@@ -181,6 +183,7 @@ namespace NCL {
 			PushdownState* inGameState;
 			PushdownState* pauseState;
 			PushdownState* finishState;
+			PushdownState* userInputState;
 
 			GameServer* server;
 			GameClient* client;
@@ -188,6 +191,9 @@ namespace NCL {
 			GamePacketReceiver* serverPacketReceiver;
 			string playerName;
 			string finalResult;
+			bool inputFinish;
+			string userInput;
+			string inputInstructions;
 			vector<string> clientNames;
 
 			//Coursework Additional functionality	
